@@ -1,0 +1,14 @@
+<form method="POST">
+    {% csrf_token %}
+    <input type="text" name="address" placeholder="Введіть адресу" required>
+    <textarea name="description" placeholder="Що сталося?"></textarea>
+
+    <label>Виберіть монтажників (утримуйте Ctrl для вибору кількох):</label>
+    <select name="installers" multiple class="form-control">
+        {% for emp in installers %}
+            <option value="{{ emp.id }}">{{ emp.full_name }}</option>
+        {% endfor %}
+    </select>
+
+    <button type="submit" class="btn btn-danger">Терміново призначити</button>
+</form>

@@ -1,0 +1,251 @@
+{% extends 'base.html' %}
+{% block title %}Журнал завдань | UIC-Manager{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-body"><i class="bi bi-list-task text-primary"></i> Журнал завдань та робіт</h2>
+    </div>
+
+    <ul class="nav nav-pills mb-4" id="taskTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active fw-bold" id="pending-tab" data-bs-toggle="pill" data-bs-target="#pending" type="button" role="tab">
+                <i class="bi bi-inbox-fill"></i> Нові / Очікують
+                <span class="badge text-bg-light ms-1">{{ pending_count }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-bold text-body" id="planned-tab" data-bs-toggle="pill" data-bs-target="#planned" type="button" role="tab">
+                <i class="bi bi-tools text-primary"></i> В роботі
+                <span class="badge text-bg-secondary ms-1">{{ planned_count }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-bold text-body" id="archive-tab" data-bs-toggle="pill" data-bs-target="#archive" type="button" role="tab">
+                <i class="bi bi-archive-fill text-success"></i> Архів (Історія)
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="taskTabsContent">
+
+        <div class="tab-pane fade show active" id="pending" role="tabpanel">
+            <div class="card shadow-sm border-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-secondary">
+                            <tr>
+                                <th>Тип</th>
+                                <th>Клієнт / Об'єкт</th>
+                                <th>Адреса / Локація</th>
+                                <th>Опис / Коментар</th>
+                                <th class="text-end">Дії (Колл-центр)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for em in pending_emergencies %}
+                            <tr class="table-danger">
+                                <td><span class="badge text-bg-danger"><i class="bi bi-lightning-charge-fill"></i> Аварія</span><br><small class="text-body-secondary">{{ em.created_at|date:"d.m.Y H:i" }}</small></td>
+                                <td><strong>Магістраль/Вузол</strong></td>
+                                <td><strong class="text-danger">{{ em.address }}</strong></td>
+                                <td>{{ em.description }}</td>
+                                <td class="text-end">
+                                    <div class="d-flex gap-2 justify-content-end">
+                                        <form method="POST">{% csrf_token %}<input type="hidden" name="action" value="cancel"><input type="hidden" name="task_type" value="emergency"><input type="hidden" name="task_id" value="{{ em.id }}">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger fw-bold" title="Хибний виклик"><i class="bi bi-x-lg"></i></button>
+                                        </form>
+                                        <button class="btn btn-sm btn-primary fw-bold assign-btn" data-type="emergency" data-id="{{ em.id }}" data-bs-toggle="modal" data-bs-target="#assignModal">В роботу</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+
+                            {% for app in pending_apps %}
+                            <tr>
+                                <td><span class="badge text-bg-primary"><i class="bi bi-person-plus-fill"></i> Підключення</span><br><small class="text-body-secondary">{{ app.created_at|date:"d.m.Y H:i" }}</small></td>
+                                <td><strong>{{ app.full_name }}</strong><br><small class="text-body-secondary"><i class="bi bi-telephone"></i> {{ app.phone }}</small></td>
+                                <td>{{ app.city }}<br><small class="text-body-secondary">вул. {{ app.street }}, {{ app.house_number }}</small></td>
+                                <td>{{ app.comment|default:"-" }}</td>
+                                <td class="text-end">
+                                    <div class="d-flex gap-2 justify-content-end">
+                                        <form method="POST">{% csrf_token %}<input type="hidden" name="action" value="cancel"><input type="hidden" name="task_type" value="application"><input type="hidden" name="task_id" value="{{ app.id }}">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger fw-bold" title="Відмова клієнта">Відмова</button>
+                                        </form>
+                                        <button class="btn btn-sm btn-primary fw-bold assign-btn" data-type="application" data-id="{{ app.id }}" data-bs-toggle="modal" data-bs-target="#assignModal">Погодити</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                                {% if not pending_emergencies %}
+                                <tr><td colspan="5" class="text-center py-4 text-body-secondary">Немає нових завдань</td></tr>
+                                {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="planned" role="tabpanel">
+            <div class="card shadow-sm border-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-secondary">
+                            <tr>
+                                <th>Дата / Виконавець</th>
+                                <th>Клієнт / Об'єкт</th>
+                                <th>Адреса</th>
+                                <th>Коментар</th>
+                                <th class="text-end">Завершення</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for em in planned_emergencies %}
+                            <tr class="table-warning">
+                                <td><strong class="text-danger">Невідкладно</strong><br><small class="text-body-secondary">Монтажники: {% for a in em.assignees.all %}{{ a.full_name }}{% empty %}Не призначено{% endfor %}</small></td>
+                                <td><strong><span class="badge text-bg-danger">АВАРІЯ</span></strong></td>
+                                <td>{{ em.address }}</td>
+                                <td>{{ em.description }}</td>
+                                <td class="text-end">
+                                    <form method="POST" style="display:inline;">{% csrf_token %}<input type="hidden" name="action" value="complete"><input type="hidden" name="task_type" value="emergency"><input type="hidden" name="task_id" value="{{ em.id }}">
+                                        <button type="submit" class="btn btn-sm btn-success fw-bold"><i class="bi bi-check-circle"></i> Виконано</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+
+                            {% for app in planned_apps %}
+                            <tr>
+                                <td><strong class="text-primary">{{ app.planned_date|date:"d.m.Y"|default:"Дата не вказана" }}</strong><br><small class="text-body-secondary"><i class="bi bi-person"></i> {{ app.assignee.full_name|default:"Інша персона" }}</small></td>
+                                <td><strong>{{ app.full_name }}</strong><br><small class="text-body-secondary">{{ app.phone }}</small></td>
+                                <td>{{ app.city }}, вул. {{ app.street }}</td>
+                                <td>{{ app.comment }}</td>
+                                <td class="text-end">
+                                    <div class="d-flex gap-2 justify-content-end">
+                                        <form method="POST">{% csrf_token %}<input type="hidden" name="action" value="cancel"><input type="hidden" name="task_type" value="application"><input type="hidden" name="task_id" value="{{ app.id }}">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger fw-bold" title="Скасувати / Відмова">Відміна</button>
+                                        </form>
+                                        <form method="POST">{% csrf_token %}<input type="hidden" name="action" value="complete"><input type="hidden" name="task_type" value="application"><input type="hidden" name="task_id" value="{{ app.id }}">
+                                            <button type="submit" class="btn btn-sm btn-success fw-bold"><i class="bi bi-check-circle"></i> Зроблено</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                                {% if not planned_emergencies %}
+                                <tr><td colspan="5" class="text-center py-4 text-body-secondary">Немає запланованих робіт</td></tr>
+                                {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="archive" role="tabpanel">
+            <div class="card shadow-sm border-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-secondary">
+                            <tr>
+                                <th>Статус</th>
+                                <th>Клієнт / Локація</th>
+                                <th>Адреса</th>
+                                <th>Опис / Коментар</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for em in completed_emergencies %}
+                            <tr>
+                                <td><span class="badge text-bg-secondary"><i class="bi bi-check-all"></i> Закрито</span></td>
+                                <td>Аварія / Магістраль</td>
+                                <td>{{ em.address }}</td>
+                                <td>{{ em.description }}</td>
+                            </tr>
+                            {% endfor %}
+                            {% for app in completed_apps %}
+                            <tr>
+                                <td>
+                                    {% if app.status == 'connected' %}
+                                        <span class="badge text-bg-success"><i class="bi bi-check-lg"></i> Виконано</span>
+                                    {% elif app.status == 'refusal' %}
+                                        <span class="badge text-bg-danger"><i class="bi bi-x-lg"></i> Відхилено</span>
+                                    {% else %}
+                                        <span class="badge text-bg-secondary">Архів</span>
+                                    {% endif %}
+                                </td>
+                                <td><strong>{{ app.full_name }}</strong><br><small class="text-body-secondary">{{ app.phone }}</small></td>
+                                <td>{{ app.city }}, вул. {{ app.street }}</td>
+                                <td>{{ app.comment }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="assignModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-bottom-0">
+                <h5 class="modal-title fw-bold"><i class="bi bi-calendar-check text-primary"></i> Погодити заявку</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="assign">
+                <input type="hidden" name="task_type" id="modal_task_type">
+                <input type="hidden" name="task_id" id="modal_task_id">
+
+                <div class="modal-body py-0">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-body-secondary">Виконавець (Монтажник)</label>
+                        <select name="assignee" class="form-select fw-bold">
+                            <option value="">-- Інша персона / Не призначати --</option>
+                            {% for emp in installers %}
+                                <option value="{{ emp.id }}">{{ emp.full_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3" id="date_block">
+                        <label class="form-label small fw-bold text-body-secondary">Запланована дата підключення</label>
+                        <input type="date" name="planned_date" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-body-secondary">Коментар / Деталі зідзвону з клієнтом</label>
+                        <textarea name="comment" class="form-control" rows="2" placeholder="Наприклад: клієнт просив бути після 14:00..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0 pt-0">
+                    <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Скасувати</button>
+                    <button type="submit" class="btn btn-primary fw-bold px-4">В роботу</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const assignBtns = document.querySelectorAll('.assign-btn');
+        assignBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const taskType = this.getAttribute('data-type');
+                const taskId = this.getAttribute('data-id');
+
+                document.getElementById('modal_task_type').value = taskType;
+                document.getElementById('modal_task_id').value = taskId;
+
+                if(taskType === 'emergency') {
+                    document.getElementById('date_block').style.display = 'none';
+                } else {
+                    document.getElementById('date_block').style.display = 'block';
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

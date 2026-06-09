@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% block title %}Склад | UIC-Manager{% endblock %}
+
+{% block content %}
+<style>
+    /* Адаптація карток та таблиці під перемикач тем */
+    .wh-card {
+        background-color: var(--tw-card-bg);
+        border: 1px solid var(--tw-border);
+        border-radius: 12px;
+        overflow: hidden;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .wh-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    }
+    .wh-img-container {
+        height: 180px;
+        background-color: var(--tw-surface2);
+        border-bottom: 1px solid var(--tw-border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 15px;
+    }
+    .wh-img-container img {
+        max-height: 100%;
+        max-width: 100%;
+        object-fit: contain;
+    }
+
+    .theme-table { width: 100%; border-collapse: collapse; }
+    .theme-table th { padding: 12px 16px; font-weight: 700; color: var(--tw-muted); background: var(--tw-surface2); border-bottom: 2px solid var(--tw-border); text-align: left; }
+    .theme-table td { padding: 12px 16px; color: var(--tw-text); border-bottom: 1px solid var(--tw-border); vertical-align: middle; }
+    .theme-table tr:hover td { background-color: var(--tw-row-hover); }
+</style>
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 style="color: var(--tw-text); margin: 0; font-weight: 700;">
+            <i class="bi bi-box-seam-fill" style="color: var(--tw-accent);"></i> Склад обладнання
+        </h2>
+    </div>
+
+    <h4 class="mb-3 fw-bold" style="color: var(--tw-accent);">Каталог товарів</h4>
+
+    <div class="row g-4">
+        {% for product in products %}
+        <div class="col-md-3">
+            <div class="wh-card h-100 d-flex flex-column">
+
+                <div class="wh-img-container">
+                    {% if product.image %}
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                    {% else %}
+                        <div class="text-center" style="color: var(--tw-muted);">
+                            <i class="bi bi-image" style="font-size: 3rem; opacity: 0.3;"></i>
+                            <p class="mb-0 mt-2 fw-bold">Без фото</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="card-body d-flex flex-column p-3" style="color: var(--tw-text);">
+                    <h5 class="card-title fw-bold mb-2">{{ product.name }}</h5>
+                    <p class="card-text small mb-3" style="color: var(--tw-muted);">{{ product.description|default:"" }}</p>
+
+                    <div class="mt-auto">
+                        <div style="border-top: 1px solid var(--tw-border); margin: 10px 0;"></div>
+
+                        <div class="d-flex justify-content-between mb-1">
+                            <span style="color: var(--tw-muted);">Ціна:</span>
+                            <span class="fw-bold">{{ product.price }} ₴</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-3">
+                            <span style="color: var(--tw-muted);">В наявності:</span>
+                            <span class="fw-bold {% if product.quantity <= 0 %}text-danger{% else %}text-success{% endif %}">
+                                {{ product.quantity }} шт.
+                            </span>
+                        </div>
+
+                        {% if product.quantity > 0 %}
+                            <a href="{% url 'sell_product' product.id %}" class="btn fw-bold w-100 text-white" style="background-color: var(--tw-accent); border: none;">
+                                <i class="bi bi-cart-check"></i> Видати в роботу
+                            </a>
+                        {% else %}
+                            <button class="btn fw-bold w-100" disabled style="background-color: var(--tw-surface2); color: var(--tw-muted); border: 1px solid var(--tw-border);">
+                                Немає в наявності
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="text-center py-5" style="color: var(--tw-muted); border: 2px dashed var(--tw-border); border-radius: 12px;">
+                <i class="bi bi-box-open fs-1 d-block mb-3 opacity-50"></i>
+                <h5 class="fw-bold">Каталог порожній</h5>
+                <p>Додайте товари через адмін-панель.</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div style="border-top: 1px solid var(--tw-border); margin: 40px 0;"></div>
+
+    <h4 class="mb-3 fw-bold" style="color: var(--tw-text);">
+        <i class="bi bi-clock-history text-secondary"></i> Журнал операцій (Видачі / Продажі)
+    </h4>
+    <div class="card border-0 shadow-sm" style="background-color: var(--tw-card-bg); border: 1px solid var(--tw-border) !important; border-radius: 12px; overflow: hidden;">
+        <div class="table-responsive">
+            <table class="theme-table">
+                <thead>
+                    <tr>
+                        <th>Товар</th>
+                        <th>Дата операції</th>
+                        <th>Сума</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sale in recent_sales %}
+                    <tr>
+                        <td><strong>{{ sale.product.name }}</strong></td>
+                        <td><span style="color: var(--tw-muted);">{{ sale.sold_at|date:"d.m.Y H:i" }}</span></td>
+                        <td><span class="fw-bold text-success">+{{ sale.total_price }} ₴</span></td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center py-4" style="color: var(--tw-muted);">
+                            Операцій ще не було.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

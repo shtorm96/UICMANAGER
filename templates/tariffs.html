@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}Тарифи | UIC-Manager{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <h2 style="color: var(--tw-text); margin: 0; font-weight: 700;">
+            <i class="bi bi-reception-4" style="color: var(--tw-accent);"></i> Тарифні плани
+        </h2>
+
+        <a href="/admin/infrastructure/tariff/" class="btn fw-bold px-4 text-white d-inline-flex align-items-center gap-2 shadow-sm"
+           style="background-color: var(--tw-accent); border: none; border-radius: 8px; height: 40px; font-size: 0.88rem;"
+           target="_blank">
+            <i class="bi bi-gear-fill"></i> Керування тарифами
+        </a>
+    </div>
+
+    <div class="row justify-content-center g-4">
+        {% for tariff in tariffs %}
+        <div class="col-xl-3 col-lg-4 col-md-6">
+            <div class="card h-100 border-0 shadow-sm" style="background-color: var(--tw-sidebar-bg); border: 1px solid var(--tw-sidebar-border); border-radius: 20px; overflow: hidden;">
+
+                {% if tariff.is_promo %}
+                <div class="text-white text-center py-1 fw-bold" style="background: linear-gradient(90deg, #d33cff, #0088cc); font-size: 0.85rem;">
+                    Акційна ціна
+                </div>
+                {% else %}
+                <div style="background: var(--tw-sidebar-border); height: 28px;"></div>
+                {% endif %}
+
+                <div class="card-body text-center p-4">
+                    <h4 class="fw-bold mb-1" style="color: var(--tw-text);">
+                        <i class="bi bi-battery-half" style="color: var(--tw-green, #00c853);"></i> {{ tariff.name }}
+                    </h4>
+                    <p style="color: var(--tw-muted);" class="small mb-4">Працює без світла</p>
+
+                    <div class="rounded-pill w-100 fw-bold mb-3" style="background-color: var(--tw-accent-soft); color: var(--tw-accent); padding: 10px; cursor: default;">
+                        <i class="bi bi-check-circle-fill"></i> Доступний тариф
+                    </div>
+
+                    <h4 class="fw-bold mb-3" style="color: var(--tw-text);">{{ tariff.price }} грн/міс</h4>
+
+                    <div class="small mb-3" style="color: var(--tw-muted);">Що входить до тарифу:</div>
+
+                    <div class="mb-4 fs-5" style="color: var(--tw-accent);">
+                        <i class="bi bi-wifi"></i> + <i class="bi bi-tv"></i> + <i class="bi bi-geo-alt"></i> + <i class="bi bi-film"></i>
+                    </div>
+
+                    <hr style="border-color: var(--tw-sidebar-border);">
+
+                    <ul class="list-unstyled text-start mb-0">
+                        <li class="d-flex justify-content-between align-items-center py-2" style="border-bottom: 1px solid var(--tw-sidebar-border);">
+                            <span style="color: var(--tw-muted);" class="fw-bold small">Швидкість</span>
+                            <span class="fw-bold small" style="color: var(--tw-text);">до {{ tariff.speed }} Мбіт/сек</span>
+                        </li>
+                        <li class="d-flex justify-content-between align-items-center py-2" style="border-bottom: 1px solid var(--tw-sidebar-border);">
+                            <span style="color: var(--tw-muted);" class="fw-bold small">Кількість каналів</span>
+                            <div class="text-end">
+                                <span class="fw-bold small d-block" style="color: var(--tw-text);">{{ tariff.channels }}</span>
+                            </div>
+                        </li>
+                        <li class="d-flex justify-content-between align-items-center py-2" style="border-bottom: 1px solid var(--tw-sidebar-border);">
+                            <span style="color: var(--tw-muted);" class="fw-bold small">Динамічний IP</span>
+                            {% if tariff.dynamic_ip %}
+                                <i class="bi bi-check-lg fs-5" style="color: var(--tw-text);"></i>
+                            {% else %}
+                                <i class="bi bi-x-lg fs-5" style="color: var(--tw-muted);"></i>
+                            {% endif %}
+                        </li>
+                        <li class="d-flex justify-content-between align-items-center py-2 mt-2">
+                            <span style="color: var(--tw-muted);" class="fw-bold small">Підключення</span>
+                            <span class="fw-bold small" style="color: var(--tw-text);">{{ tariff.connection_fee }} грн.</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

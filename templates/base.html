@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="uk" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Панель управління | UIC-Manager{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <style>
+        [data-bs-theme="dark"] {
+            --tw-accent: #9147ff; --tw-accent-hover: #772ce8; --tw-accent-soft: rgba(145, 71, 255, 0.13);
+            --tw-navbar-bg: #18181b; --tw-navbar-border: #2d2d35; --tw-sidebar-bg: #18181b;
+            --tw-sidebar-border: #2d2d35; --tw-nav-hover: #1f1f23; --tw-nav-active: #2d2d35;
+            --tw-main-bg: #0e0e10; --tw-text: #efeff1; --tw-muted: #adadb8;
+            --tw-input-bg: rgba(255,255,255,0.08); --tw-input-border: rgba(255,255,255,0.15);
+            --tw-input-text: #efeff1; --tw-input-ph: rgba(255,255,255,0.45);
+            /* Форми в модалках */
+            --tw-form-bg: rgba(255,255,255,0.08);
+            --tw-form-border: rgba(255,255,255,0.15);
+            --tw-form-text: #efeff1;
+            --tw-form-ph: rgba(255,255,255,0.45);
+        }
+        [data-bs-theme="light"] {
+            --tw-accent: #0088cc; --tw-accent-hover: #0077bb; --tw-accent-soft: rgba(0, 136, 204, 0.12);
+            --tw-navbar-bg: #0088cc; --tw-navbar-border: #0077bb; --tw-sidebar-bg: #ffffff;
+            --tw-sidebar-border: #e0e0e8; --tw-nav-hover: #e8f4fd; --tw-nav-active: #d0eaf8;
+            --tw-main-bg: #f4f4f8; --tw-text: #0e0e10; --tw-muted: #6b6b7a;
+            --tw-input-bg: rgba(255,255,255,0.2); --tw-input-border: rgba(255,255,255,0.3);
+            --tw-input-text: #ffffff; --tw-input-ph: rgba(255,255,255,0.65);
+            /* Форми в модалках */
+            --tw-form-bg: #ffffff;
+            --tw-form-border: #ced4da;
+            --tw-form-text: #0e0e10;
+            --tw-form-ph: #6b6b7a;
+        }
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--tw-main-bg); transition: background 0.3s, color 0.3s; }
+        .sidebar { height: 100vh; background: var(--tw-sidebar-bg); border-right: 1px solid var(--tw-sidebar-border); position: fixed; width: 220px; z-index: 100; display: flex; flex-direction: column; }
+        .logo-area { padding: 18px 16px; border-bottom: 1px solid var(--tw-sidebar-border); display: flex; align-items: center; gap: 10px; color: var(--tw-accent); font-weight: 800; font-size: 1.05rem; }
+        .logo-icon { width: 34px; height: 34px; border-radius: 8px; background: var(--tw-accent-soft); display: flex; align-items: center; justify-content: center; font-size: 1rem; color: var(--tw-accent); }
+        .sidebar-heading { font-size: 0.68rem; font-weight: 700; color: var(--tw-muted); padding: 18px 16px 6px; text-transform: uppercase; letter-spacing: 1.2px; }
+        .sidebar .nav-link { color: var(--tw-text); padding: 9px 16px; font-size: 0.875rem; font-weight: 500; border-radius: 8px; margin: 1px 8px; display: flex; align-items: center; gap: 10px; }
+        .sidebar .nav-link i { font-size: 1rem; width: 20px; text-align: center; color: var(--tw-accent); opacity: 0.75; }
+        .sidebar .nav-link:hover { background: var(--tw-nav-hover); color: var(--tw-accent); }
+        .sidebar .nav-link.active { background: var(--tw-nav-active); color: var(--tw-accent); font-weight: 600; }
+        .main-content { margin-left: 220px; min-height: 100vh; background: var(--tw-main-bg); }
+        .top-navbar { background: var(--tw-navbar-bg); border-bottom: 1px solid var(--tw-navbar-border); padding: 10px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 99; box-shadow: 0 2px 12px rgba(0,0,0,0.2); }
+        .search-wrap { display: flex; align-items: center; gap: 8px; }
+        .search-box { background: var(--tw-input-bg); border: 1px solid var(--tw-input-border); color: var(--tw-input-text); border-radius: 6px; padding: 5px 12px; font-size: 0.82rem; width: 180px; }
+        .search-box::placeholder { color: var(--tw-input-ph); }
+        .search-box:focus { outline: none; border-color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.15); }
+        .btn-new-client { display: inline-flex; align-items: center; gap: 7px; font-size: 0.82rem; font-weight: 700; background: rgba(255,255,255,0.2); color: #fff; border: 1.5px solid rgba(255,255,255,0.5); border-radius: 6px; padding: 6px 14px; cursor: pointer; text-decoration: none; }
+        .btn-new-client:hover { background: rgba(255,255,255,0.3); color: #fff; }
+        .real-time-clock { display: flex; flex-direction: column; align-items: center; line-height: 1.15; user-select: none; }
+        .clock-time { font-size: 1.45rem; font-weight: 900; letter-spacing: 2px; color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+        .clock-date { font-size: 0.75rem; color: rgba(255,255,255,0.8); font-weight: 500; }
+        .nav-right { display: flex; align-items: center; gap: 2px; }
+        .nav-right a, .nav-right button { color: rgba(255,255,255,0.88); font-size: 0.8rem; font-weight: 500; text-decoration: none; padding: 5px 10px; border-radius: 6px; background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+        .nav-right a:hover, .nav-right button:hover { background: rgba(255,255,255,0.15); color: #fff; }
+        .theme-toggle-btn { background: rgba(255,255,255,0.12) !important; border: 1px solid rgba(255,255,255,0.25) !important; border-radius: 8px !important; padding: 5px 10px !important; font-size: 1rem !important; }
+        .page-content { padding: 28px 24px; }
+        .modal-custom-bg { background: var(--tw-sidebar-bg); border: 1px solid var(--tw-sidebar-border); border-radius: 12px; }
+        .modal-title-elegant { font-weight: 800; color: var(--tw-text); text-align: center; width: 100%; margin-top: 10px; }
+        .form-label { font-weight: 600; font-size: 0.82rem; color: var(--tw-text); }
+        .dynamic-box { border-left: 3px solid var(--tw-accent); background: var(--tw-nav-hover); padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+        .btn-save-custom { background: var(--tw-accent); color: #fff; font-weight: 700; border-radius: 6px; padding: 8px 20px; border: none; }
+
+        /* Плейсхолдери у формах модалок */
+        #newApplicationModal input::placeholder,
+        #newApplicationModal textarea::placeholder {
+            color: var(--tw-form-ph);
+        }
+
+        /* Кастомний dropdown замість нативного select */
+        .custom-select-wrap { position: relative; }
+        .custom-select-btn {
+            width: 100%; display: flex; align-items: center; justify-content: space-between;
+            background-color: var(--tw-form-bg); color: var(--tw-form-text);
+            border: 1px solid var(--tw-form-border); border-radius: 6px;
+            padding: 7px 12px; font-size: 0.95rem; font-weight: 700;
+            cursor: pointer; user-select: none; transition: border-color 0.15s;
+        }
+        .custom-select-btn:hover { border-color: var(--tw-accent); }
+        .custom-select-btn.placeholder-shown { color: var(--tw-form-ph); font-weight: 400; }
+        .custom-select-btn i { font-size: 0.75rem; opacity: 0.6; flex-shrink: 0; transition: transform 0.2s; }
+        .custom-select-btn.open i { transform: rotate(180deg); }
+        .custom-select-dropdown {
+            display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+            background-color: var(--tw-sidebar-bg); border: 1px solid var(--tw-form-border);
+            border-radius: 8px; z-index: 1055; overflow: hidden;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+        }
+        .custom-select-dropdown.open { display: block; }
+        .custom-select-option {
+            padding: 9px 14px; font-size: 0.88rem; font-weight: 500;
+            color: var(--tw-form-text); cursor: pointer; transition: background 0.1s;
+        }
+        .custom-select-option:hover { background-color: var(--tw-nav-hover); color: var(--tw-accent); }
+        .custom-select-option.selected { background-color: var(--tw-nav-active); color: var(--tw-accent); font-weight: 700; }
+        .custom-select-option.disabled { color: var(--tw-form-ph); cursor: default; font-style: italic; }
+        .custom-select-option.disabled:hover { background: none; color: var(--tw-form-ph); }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="logo-area">
+            <div class="logo-icon"><i class="bi bi-cpu-fill"></i></div>
+            UIC-MANAGER
+        </div>
+        <div class="sidebar-heading">Навігація</div>
+        <ul class="nav flex-column">
+            <li class="nav-item"><a class="nav-link" href="{% url 'dashboard' %}"><i class="bi bi-house-door-fill"></i> Головна</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'clients' %}"><i class="bi bi-people-fill"></i> Абоненти</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'tariffs' %}"><i class="bi bi-reception-4"></i> Тарифи</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'messages' %}"><i class="bi bi-envelope-fill"></i> Повідомлення</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'network_map' %}"><i class="bi bi-map-fill"></i> Карта мережі</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'personnel' %}"><i class="bi bi-person-badge-fill"></i> Персонал</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'tasks' %}"><i class="bi bi-list-task"></i> Журнал завдань</a></li>
+            <li class="nav-item mt-2 px-2">
+                <a href="{% url 'create_emergency' %}" class="btn btn-danger btn-sm w-100 text-start">
+                    <i class="bi bi-exclamation-triangle-fill"></i> Аварія / Обрив
+                </a>
+            </li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'warehouse' %}"><i class="bi bi-box-seam"></i> Склад</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'billing_dashboard' %}"><i class="bi bi-credit-card-2-front-fill"></i> Білінг</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="top-navbar">
+            <div class="search-wrap">
+                <form action="{% url 'global_search' %}" method="GET" class="d-flex align-items-center m-0">
+                    <input type="text" name="q" class="search-box" placeholder="Швидкий пошук..." required>
+                    <button type="submit" style="background:transparent; border:none; margin-left:-30px; color:rgba(255,255,255,0.7); z-index:10;"><i class="bi bi-search"></i></button>
+                </form>
+                <button type="button" class="btn-new-client" data-bs-toggle="modal" data-bs-target="#newApplicationModal">
+                    <i class="bi bi-person-plus-fill"></i> Нова заявка
+                </button>
+            </div>
+
+            <div class="real-time-clock mx-auto">
+                <div id="clock-time" class="clock-time">00:00:00</div>
+                <div id="clock-date" class="clock-date">Завантаження...</div>
+            </div>
+
+            <div class="nav-right">
+                <button id="themeSwitcher" class="theme-toggle-btn" title="Змінити тему">
+                    <i class="bi bi-moon-stars-fill" id="themeIcon"></i>
+                </button>
+
+                <span style="display: flex; align-items: center; gap: 5px; padding: 5px 10px; color: rgba(255,255,255,0.88); font-size: 0.8rem; font-weight: 500; cursor: default;">
+                    <i class="bi bi-person-circle"></i> Тромса Д.С.
+                </span>
+
+                <form action="{% url 'logout' %}" method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit"><i class="bi bi-box-arrow-right"></i> Вихід</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="page-content">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    <div class="modal fade" id="newApplicationModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content shadow-lg" style="background-color: var(--tw-sidebar-bg); color: var(--tw-text); border: 1px solid var(--tw-sidebar-border); border-radius: 12px;">
+                <div class="modal-header border-bottom-0 pb-0">
+                    <h4 class="modal-title fw-bold">
+                        <i class="bi bi-person-plus-fill" style="color: var(--tw-accent);"></i> Заведення нової заявки
+                    </h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 p-md-5 pt-3">
+                    <form id="newAppForm" method="POST" action="{% url 'create_application' %}">
+                        {% csrf_token %}
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small mb-1" style="color: var(--tw-muted);">Місто/Село:</label>
+                                <div class="custom-select-wrap">
+                                    <input type="hidden" name="city" id="city_value" required>
+                                    <button type="button" class="custom-select-btn placeholder-shown" id="city_btn" data-target="city_dropdown">
+                                        <span id="city_label">Оберіть населений пункт</span>
+                                        <i class="bi bi-chevron-down"></i>
+                                    </button>
+                                    <div class="custom-select-dropdown" id="city_dropdown">
+                                        <div class="custom-select-option disabled" data-value="">Оберіть населений пункт</div>
+                                        <div class="custom-select-option" data-value="м. Васильків">м. Васильків</div>
+                                        <div class="custom-select-option" data-value="с. Барахти">с. Барахти</div>
+                                        <div class="custom-select-option" data-value="с. Безп'ятне">с. Безп'ятне</div>
+                                        <div class="custom-select-option" data-value="с. Борисів">с. Борисів</div>
+                                        <div class="custom-select-option" data-value="с. Березанщина">с. Березанщина</div>
+                                        <div class="custom-select-option" data-value="с. Велика Бугаївка">с. Велика Бугаївка</div>
+                                        <div class="custom-select-option" data-value="с. Залізне">с. Залізне</div>
+                                        <div class="custom-select-option" data-value="с. Заріччя">с. Заріччя</div>
+                                        <div class="custom-select-option" data-value="с. Застугна">с. Застугна</div>
+                                        <div class="custom-select-option" data-value="с. Здорівка">с. Здорівка</div>
+                                        <div class="custom-select-option" data-value="с. Зелений Бір">с. Зелений Бір</div>
+                                        <div class="custom-select-option" data-value="с. Кобці">с. Кобці</div>
+                                        <div class="custom-select-option" data-value="с. Крушинка">с. Крушинка</div>
+                                        <div class="custom-select-option" data-value="с. Путрівка">с. Путрівка</div>
+                                        <div class="custom-select-option" data-value="Інше">Інше</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small mb-1" style="color: var(--tw-muted);">Початковий статус:</label>
+                                <div class="custom-select-wrap">
+                                    <input type="hidden" name="status" id="status_value" value="new">
+                                    <button type="button" class="custom-select-btn" id="status_btn" data-target="status_dropdown">
+                                        <span id="status_label">Нова (Очікує обробки)</span>
+                                        <i class="bi bi-chevron-down"></i>
+                                    </button>
+                                    <div class="custom-select-dropdown" id="status_dropdown">
+                                        <div class="custom-select-option selected" data-value="new">Нова (Очікує обробки)</div>
+                                        <div class="custom-select-option" data-value="agreed">Погоджено (Відразу в роботу)</div>
+                                        <div class="custom-select-option" data-value="refusal">Відмова / В архів</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small mb-1" style="color: var(--tw-muted);">Тип завдання:</label>
+                            <div class="custom-select-wrap">
+                                <input type="hidden" name="task_type" id="task_type_value" value="connection">
+                                <button type="button" class="custom-select-btn" id="task_type_btn" data-target="task_type_dropdown">
+                                    <span id="task_type_label">Нове підключення</span>
+                                    <i class="bi bi-chevron-down"></i>
+                                </button>
+                                <div class="custom-select-dropdown" id="task_type_dropdown">
+                                    <div class="custom-select-option selected" data-value="connection">Нове підключення</div>
+                                    <div class="custom-select-option" data-value="repair">Ремонт / Відновлення</div>
+                                    <div class="custom-select-option" data-value="cctv">Відеонагляд (CCTV)</div>
+                                    <div class="custom-select-option" data-value="other">Інше</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small mb-1" style="color: var(--tw-muted);">Тип об'єкта:</label>
+                            <div class="d-flex gap-4 p-2 rounded" style="background-color: var(--tw-nav-hover);">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="object_type" id="typeHouse" value="house" checked>
+                                    <label class="form-check-label fw-medium" for="typeHouse" style="color: var(--tw-text);">Будинок</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="object_type" id="typeFlat" value="flat">
+                                    <label class="form-check-label fw-medium" for="typeFlat" style="color: var(--tw-text);">Квартира</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="object_type" id="typeOffice" value="office">
+                                    <label class="form-check-label fw-medium" for="typeOffice" style="color: var(--tw-text);">Комерція / Офіс</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-3 rounded-3 mb-3" style="background-color: var(--tw-nav-hover); border: 1px solid var(--tw-sidebar-border);">
+
+                            <div class="row g-2 mb-2">
+                                <div class="col-md-8">
+                                    <label class="form-label fw-bold small mb-1" style="color: var(--tw-muted);">Вулиця</label>
+                                    <input type="text" name="street" class="form-control" style="background-color: var(--tw-form-bg); color: var(--tw-form-text); border: 1px solid var(--tw-form-border);" required placeholder="Шевченка">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold small mb-1" style="color: var(--tw-muted);">№ будинку</label>
+                                    <input type="text" id="base_house_number" class="form-control" style="background-color: var(--tw-form-bg); color: var(--tw-form-text); border: 1px solid var(--tw-form-border);" required placeholder="12А">
+                                </div>
+                            </div>
+
+                            <div class="row g-2" id="flatFields" style="display: none;">
+                                <div class="col-4">
+                                    <label class="form-label fw-bold small mb-1" style="color: var(--tw-muted);">Під'їзд</label>
+                                    <input type="text" id="flat_entrance" class="form-control" style="background-color: var(--tw-form-bg); color: var(--tw-form-text); border: 1px solid var(--tw-form-border);" placeholder="1">
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label fw-bold small mb-1" style="color: var(--tw-muted);">Поверх</label>
+                                    <input type="text" id="flat_floor" class="form-control" style="background-color: var(--tw-form-bg); color: var(--tw-form-text); border: 1px solid var(--tw-form-border);" placeholder="5">
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label fw-bold small mb-1" style="color: var(--tw-accent);">№ квартири</label>
+                                    <input type="text" id="flat_number" class="form-control fw-bold" style="background-color: var(--tw-form-bg); color: var(--tw-form-text); border: 1px solid var(--tw-accent);" placeholder="45">
+                                </div>
+                            </div>
+
+                            <input type="hidden" name="house_number" id="final_house_number">
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small mb-1" style="color: var(--tw-muted);">ПІБ Клієнта:</label>
+                                <input type="text" name="full_name" class="form-control" style="background-color: var(--tw-form-bg); color: var(--tw-form-text); border: 1px solid var(--tw-form-border);" required placeholder="Іванов Іван Іванович">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small mb-1" style="color: var(--tw-muted);">Телефон:</label>
+                                <input type="text" name="phone" class="form-control" style="background-color: var(--tw-form-bg); color: var(--tw-form-text); border: 1px solid var(--tw-form-border);" required placeholder="099 123 45 67">
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold small mb-1" style="color: var(--tw-muted);">Коментар від оператора:</label>
+                            <textarea name="comment" class="form-control" style="background-color: var(--tw-form-bg); color: var(--tw-form-text); border: 1px solid var(--tw-form-border);" rows="2" placeholder="Додаткова інформація або побажання клієнта..."></textarea>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Скасувати</button>
+                            <button type="submit" class="btn fw-bold px-4 text-white" style="background-color: var(--tw-accent); border: none;">Зберегти заявку</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const html = document.documentElement;
+            const switcher = document.getElementById('themeSwitcher');
+            const icon = document.getElementById('themeIcon');
+            const saved = localStorage.getItem('theme') || 'light';
+            html.setAttribute('data-bs-theme', saved);
+            updateIcon(saved);
+
+            switcher.addEventListener('click', () => {
+                const next = html.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
+                html.setAttribute('data-bs-theme', next);
+                localStorage.setItem('theme', next);
+                updateIcon(next);
+            });
+
+            function updateIcon(theme) {
+                if (theme === 'dark') { icon.className = 'bi bi-sun-fill'; icon.style.color = '#ffdf00'; }
+                else { icon.className = 'bi bi-moon-stars-fill'; icon.style.color = '#fff'; }
+            }
+
+            function updateClock() {
+                const now = new Date();
+                document.getElementById('clock-time').textContent = now.toLocaleTimeString('uk-UA', { hour12: false });
+                document.getElementById('clock-date').textContent = now.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' }) + ' р.';
+            }
+            setInterval(updateClock, 1000); updateClock();
+        });
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Ініціалізація кастомних dropdown
+            function initCustomSelects() {
+                document.querySelectorAll('.custom-select-btn').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const targetId = this.getAttribute('data-target');
+                        const dropdown = document.getElementById(targetId);
+                        const isOpen = dropdown.classList.contains('open');
+
+                        // Закрити всі інші
+                        document.querySelectorAll('.custom-select-dropdown.open').forEach(d => d.classList.remove('open'));
+                        document.querySelectorAll('.custom-select-btn.open').forEach(b => b.classList.remove('open'));
+
+                        if (!isOpen) {
+                            dropdown.classList.add('open');
+                            this.classList.add('open');
+                        }
+                    });
+                });
+
+                document.querySelectorAll('.custom-select-option').forEach(opt => {
+                    opt.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        if (this.classList.contains('disabled')) return;
+
+                        const dropdown = this.closest('.custom-select-dropdown');
+                        const wrap = this.closest('.custom-select-wrap');
+                        const btn = wrap.querySelector('.custom-select-btn');
+                        const label = btn.querySelector('span');
+                        const hiddenInput = wrap.querySelector('input[type="hidden"]');
+
+                        // Знімаємо selected з усіх опцій у цьому dropdown
+                        dropdown.querySelectorAll('.custom-select-option').forEach(o => o.classList.remove('selected'));
+                        this.classList.add('selected');
+
+                        label.textContent = this.textContent;
+                        hiddenInput.value = this.getAttribute('data-value');
+                        btn.classList.remove('placeholder-shown');
+
+                        dropdown.classList.remove('open');
+                        btn.classList.remove('open');
+                    });
+                });
+
+                // Закрити при кліку поза dropdown
+                document.addEventListener('click', function() {
+                    document.querySelectorAll('.custom-select-dropdown.open').forEach(d => d.classList.remove('open'));
+                    document.querySelectorAll('.custom-select-btn.open').forEach(b => b.classList.remove('open'));
+                });
+            }
+
+            initCustomSelects();
+
+            // Валідація — перевірка що місто обрано перед відправкою
+            document.getElementById('newAppForm').addEventListener('submit', function(e) {
+                const cityVal = document.getElementById('city_value').value;
+                if (!cityVal) {
+                    e.preventDefault();
+                    const btn = document.getElementById('city_btn');
+                    btn.style.borderColor = '#dc3545';
+                    btn.style.boxShadow = '0 0 0 0.2rem rgba(220,53,69,0.25)';
+                    setTimeout(() => { btn.style.borderColor = ''; btn.style.boxShadow = ''; }, 2000);
+                    return;
+                }
+            });
+        });
+    </script>
+
+    <script> = document.querySelectorAll('input[name="object_type"]');
+            const flatFields = document.getElementById('flatFields');
+
+            typeRadios.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if(this.value === 'flat') {
+                        flatFields.style.display = 'flex';
+                    } else {
+                        flatFields.style.display = 'none';
+                        document.getElementById('flat_entrance').value = '';
+                        document.getElementById('flat_floor').value = '';
+                        document.getElementById('flat_number').value = '';
+                    }
+                });
+            });
+
+            document.getElementById('newAppForm').addEventListener('submit', function(e) {
+                const isFlat = document.querySelector('input[name="object_type"]:checked').value === 'flat';
+                const baseHouse = document.getElementById('base_house_number').value;
+                const finalHouseInput = document.getElementById('final_house_number');
+
+                if (isFlat) {
+                    const ent = document.getElementById('flat_entrance').value;
+                    const fl = document.getElementById('flat_floor').value;
+                    const fn = document.getElementById('flat_number').value;
+
+                    let combined = baseHouse;
+                    if(ent) combined += ', під.' + ent;
+                    if(fl) combined += ', пов.' + fl;
+                    if(fn) combined += ', кв.' + fn;
+
+                    finalHouseInput.value = combined;
+                } else {
+                    finalHouseInput.value = baseHouse;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

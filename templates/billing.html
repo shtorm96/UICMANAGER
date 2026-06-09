@@ -1,0 +1,262 @@
+{% extends 'base.html' %}
+{% block title %}Білінг | UIC-Manager{% endblock %}
+{% block content %}
+
+<style>
+  [data-bs-theme="dark"] {
+    --tw-surface:   #18181b; --tw-surface2:  #1f1f23;
+    --tw-border:    #2d2d35; --tw-text:      #efeff1;
+    --tw-muted:     #adadb8; --tw-row-hover: #1f1f23;
+    --tw-thead-bg:  #1f1f23; --tw-card-bg:   #18181b;
+  }
+  [data-bs-theme="light"] {
+    --tw-surface:   #ffffff; --tw-surface2:  #f6f6f7;
+    --tw-border:    #e0e0e6; --tw-text:      #0e0e10;
+    --tw-muted:     #6b6b7a; --tw-row-hover: #f6f6f7;
+    --tw-thead-bg:  #f0f0f3; --tw-card-bg:   #ffffff;
+  }
+
+  .dash-header { display:flex; align-items:center; gap:12px; margin-bottom:24px; }
+  .dash-header h2 { color:var(--tw-text); font-size:1.5rem; font-weight:700; margin:0; }
+
+  .stat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
+  .stat-card {
+    background:var(--tw-card-bg); border:1px solid var(--tw-border);
+    border-radius:12px; padding:20px 22px; position:relative; overflow:hidden;
+    transition:transform .2s,box-shadow .2s;
+  }
+  .stat-card:hover { transform:translateY(-3px); box-shadow:0 8px 28px rgba(0,0,0,.13); }
+  .stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; border-radius:12px 12px 0 0; }
+  .stat-card.blue::before   { background:#0088cc; }
+  .stat-card.green::before  { background:#00c853; }
+  .stat-card.red::before    { background:#eb0400; }
+  .stat-card.yellow::before { background:#ffb31a; }
+
+  .stat-icon { width:40px; height:40px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; margin-bottom:14px; }
+  .stat-card.blue   .stat-icon { background:rgba(0,136,204,.13); color:#0088cc; }
+  .stat-card.green  .stat-icon { background:rgba(0,200,83,.12);  color:#00c853; }
+  .stat-card.red    .stat-icon { background:rgba(235,4,0,.12);   color:#eb0400; }
+  .stat-card.yellow .stat-icon { background:rgba(255,179,26,.12);color:#ffb31a; }
+
+  .stat-label { color:var(--tw-muted); font-size:.72rem; font-weight:600; text-transform:uppercase; letter-spacing:.8px; margin-bottom:4px; }
+  .stat-value { color:var(--tw-text); font-size:2rem; font-weight:800; line-height:1; }
+
+  .billing-card { background:var(--tw-card-bg); border:1px solid var(--tw-border); border-radius:12px; overflow:hidden; }
+  .billing-header { display:flex; align-items:center; gap:8px; padding:14px 20px; border-bottom:1px solid var(--tw-border); background:var(--tw-surface2); flex-wrap:wrap; }
+  .billing-header span { color:var(--tw-text); font-weight:700; font-size:.95rem; }
+
+  .filter-wrap { display:flex; gap:8px; align-items:center; margin-left:auto; flex-wrap:wrap; }
+  .filter-btn {
+    font-size:.75rem; font-weight:700; padding:4px 12px; border-radius:6px; border:1px solid var(--tw-border);
+    background:var(--tw-surface2); color:var(--tw-muted); cursor:pointer; text-decoration:none; transition:.15s;
+  }
+  .filter-btn:hover, .filter-btn.active { background:var(--tw-accent,#0088cc); color:#fff; border-color:transparent; }
+
+  .tw-table { width:100%; border-collapse:collapse; }
+  .tw-table thead tr { background:var(--tw-thead-bg); }
+  .tw-table thead th { padding:10px 16px; color:var(--tw-muted); font-size:.72rem; font-weight:600; text-transform:uppercase; letter-spacing:.7px; border-bottom:1px solid var(--tw-border); text-align:left; }
+  .tw-table tbody tr { border-bottom:1px solid var(--tw-border); transition:background .15s; }
+  .tw-table tbody tr:last-child { border-bottom:none; }
+  .tw-table tbody tr:hover { background:var(--tw-row-hover); }
+  .tw-table td { padding:12px 16px; color:var(--tw-text); font-size:.88rem; vertical-align:middle; }
+
+  .client-name { font-weight:600; color:var(--tw-text); }
+  .client-meta { color:var(--tw-muted); font-size:.72rem; margin-top:2px; }
+
+  .balance-pos { color:#00c853; font-weight:800; }
+  .balance-neg { color:#eb0400; font-weight:800; }
+
+  .tw-badge { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:6px; font-size:.7rem; font-weight:700; }
+  .badge-active   { background:rgba(0,200,83,.12); color:#2f9e44; border:1px solid rgba(0,200,83,.25); }
+  .badge-blocked  { background:rgba(235,4,0,.12);  color:#e03131; border:1px solid rgba(235,4,0,.25); }
+  .badge-notariff { background:rgba(173,173,184,.1);color:#adadb8; border:1px solid rgba(173,173,184,.2); }
+
+  .search-box-billing {
+    background:var(--tw-surface); border:1px solid var(--tw-border);
+    color:var(--tw-text); border-radius:6px; padding:5px 12px;
+    font-size:.82rem; width:200px;
+  }
+  .search-box-billing::placeholder { color:var(--tw-muted); }
+  .search-box-billing:focus { outline:none; border-color:var(--tw-accent,#0088cc); }
+
+  .btn-charge {
+    background:#eb0400; color:#fff; font-weight:700; border:none;
+    border-radius:6px; padding:6px 16px; font-size:.82rem; cursor:pointer;
+    display:inline-flex; align-items:center; gap:6px;
+    transition:background .2s, transform .15s;
+  }
+  .btn-charge:hover { background:#c50000; transform:translateY(-1px); }
+
+  .btn-detail {
+    background:var(--tw-accent-soft, rgba(145,71,255,.12));
+    color:var(--tw-accent,#9147ff); border:1px solid rgba(145,71,255,.25);
+    font-weight:700; border-radius:6px; padding:4px 12px; font-size:.75rem;
+    text-decoration:none; display:inline-flex; align-items:center; gap:5px; transition:.15s;
+  }
+  .btn-detail:hover { background:var(--tw-accent,#9147ff); color:#fff; }
+
+  .login-badge {
+    font-family:monospace; font-size:.8rem; font-weight:700;
+    background:var(--tw-surface2); border:1px solid var(--tw-border);
+    border-radius:4px; padding:2px 7px; color:var(--tw-text);
+  }
+
+  @keyframes livepulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+  .live-pill { background:#eb0400; color:#fff; font-size:.7rem; font-weight:700; letter-spacing:1px; padding:3px 10px; border-radius:4px; text-transform:uppercase; animation:livepulse 2s infinite; }
+
+  @media(max-width:900px){ .stat-grid{grid-template-columns:repeat(2,1fr);} }
+  @media(max-width:560px){ .stat-grid{grid-template-columns:1fr;} }
+</style>
+
+<div>
+  <div class="dash-header">
+    <h2><i class="bi bi-credit-card-2-front-fill me-2" style="color:var(--tw-accent,#0088cc);"></i>Білінгова система</h2>
+    <span class="live-pill">● Live</span>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card blue">
+      <div class="stat-icon"><i class="bi bi-currency-exchange"></i></div>
+      <div class="stat-label">Загальний баланс</div>
+      <div class="stat-value {% if total_balance < 0 %}balance-neg{% else %}balance-pos{% endif %}">
+        {{ total_balance|default:"0"|floatformat:0 }} ₴
+      </div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-icon"><i class="bi bi-graph-up-arrow"></i></div>
+      <div class="stat-label">Поповнення цього місяця</div>
+      <div class="stat-value" style="color:#00c853;">{{ monthly_income|default:"0"|floatformat:0 }} ₴</div>
+    </div>
+    <div class="stat-card red">
+      <div class="stat-icon"><i class="bi bi-slash-circle-fill"></i></div>
+      <div class="stat-label">Заблокованих</div>
+      <div class="stat-value" style="color:#eb0400;">{{ blocked_count|default:"0" }}</div>
+    </div>
+    <div class="stat-card yellow">
+      <div class="stat-icon"><i class="bi bi-exclamation-triangle-fill"></i></div>
+      <div class="stat-label">Від'ємний баланс</div>
+      <div class="stat-value" style="color:#ffb31a;">{{ negative_count|default:"0" }}</div>
+    </div>
+  </div>
+
+  <div class="billing-card">
+    <div class="billing-header">
+      <i class="bi bi-people-fill" style="color:var(--tw-accent,#0088cc); font-size:1.1rem;"></i>
+      <span>Абоненти</span>
+
+      <form method="GET" class="filter-wrap" style="margin-left:auto;">
+        <input type="text" name="search" value="{{ search|default:'' }}" class="search-box-billing" placeholder="Пошук абонента...">
+        <a href="?status=" class="filter-btn {% if not status_filter %}active{% endif %}">Всі</a>
+        <a href="?status=active" class="filter-btn {% if status_filter == 'active' %}active{% endif %}">Активні</a>
+        <a href="?status=blocked" class="filter-btn {% if status_filter == 'blocked' %}active{% endif %}">Заблоковані</a>
+        <a href="?status=negative" class="filter-btn {% if status_filter == 'negative' %}active{% endif %}">Борг</a>
+        <button type="submit" class="filter-btn active"><i class="bi bi-search"></i></button>
+      </form>
+
+      <form method="POST" action="{% url 'charge_all' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn-charge" onclick="return confirm('Списати абонплату з усіх абонентів?')">
+          <i class="bi bi-lightning-charge-fill"></i> Списати абонплату
+        </button>
+      </form>
+    </div>
+
+    <div class="table-responsive">
+      <table class="tw-table">
+        <thead>
+          <tr>
+            <th>Абонент</th>
+            <th>Логін</th>
+            <th>Тариф</th>
+            <th>Баланс</th>
+            <th>Статус</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for client in clients %}
+          <tr>
+            <td>
+              <div class="client-name">{{ client.full_name }}</div>
+              <div class="client-meta">{{ client.contract_number }} · {{ client.phone }}</div>
+            </td>
+            <td>
+              <span class="login-badge">{{ client.credentials.login }}</span>
+            </td>
+            <td>
+              {% if client.tariff %}
+                <span style="font-weight:600; color:var(--tw-text);">{{ client.tariff.name }}</span>
+                <div class="client-meta">{{ client.tariff.price }} ₴/міс · {{ client.tariff.speed }} Мбіт/с</div>
+              {% else %}
+                <span class="tw-badge badge-notariff">Без тарифу</span>
+              {% endif %}
+            </td>
+            <td>
+              <span class="{% if client.account.balance >= 0 %}balance-pos{% else %}balance-neg{% endif %}">
+                {{ client.account.balance|floatformat:2 }} ₴
+              </span>
+            </td>
+            <td>
+              {% if client.is_blocked %}
+                <span class="tw-badge badge-blocked"><i class="bi bi-slash-circle"></i> Заблок.</span>
+              {% else %}
+                <span class="tw-badge badge-active"><i class="bi bi-check-circle"></i> Активний</span>
+              {% endif %}
+            </td>
+            <td>
+              <a href="{% url 'billing_client' client.id %}" class="btn-detail">
+                <i class="bi bi-person-lines-fill"></i> Відкрити
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" style="text-align:center; padding:32px; color:var(--tw-muted);">
+              <i class="bi bi-search" style="font-size:1.5rem; display:block; margin-bottom:8px; opacity:.4;"></i>
+              Абонентів не знайдено
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:16px 20px; flex-wrap:wrap; gap:12px; border-top:1px solid var(--tw-border);">
+      <div style="color:var(--tw-muted); font-size:.82rem;">
+        Показано <strong style="color:var(--tw-text);">{{ page_obj.start_index }}–{{ page_obj.end_index }}</strong>
+        з <strong style="color:var(--tw-text);">{{ page_obj.paginator.count }}</strong> абонентів
+      </div>
+      <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+        {% if page_obj.has_previous %}
+          <a href="?page=1{% if search %}&search={{ search }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="filter-btn">«</a>
+          <a href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="filter-btn">‹ Назад</a>
+        {% endif %}
+        {% for num in page_obj.paginator.page_range %}
+          {% if num == page_obj.number %}
+            <span style="padding:4px 12px; border-radius:6px; background:var(--tw-accent,#0088cc); color:#fff; font-size:.8rem; font-weight:800;">{{ num }}</span>
+          {% elif num == 1 or num == page_obj.paginator.num_pages or num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+            <a href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="filter-btn">{{ num }}</a>
+          {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+          <a href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="filter-btn">Вперед ›</a>
+          <a href="?page={{ page_obj.paginator.num_pages }}{% if search %}&search={{ search }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="filter-btn">»</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% if messages %}
+<div style="position:fixed; bottom:24px; right:24px; z-index:9999; display:flex; flex-direction:column; gap:8px;">
+  {% for msg in messages %}
+  <div class="alert alert-{% if msg.tags == 'error' %}danger{% elif msg.tags == 'warning' %}warning{% else %}success{% endif %} shadow mb-0" style="min-width:280px; border-radius:10px;">
+    {{ msg }}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% endblock %}

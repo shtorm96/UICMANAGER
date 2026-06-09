@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+{% block title %}Повідомлення | UIC-Manager{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2 class="mb-4 text-secondary"><i class="bi bi-envelope-fill"></i> Розсилка повідомлень</h2>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 mb-4" style="background-color: var(--tw-sidebar-bg); border: 1px solid var(--tw-sidebar-border) !important;">
+                <div class="card-header py-3" style="background-color: transparent; border-bottom: 1px solid var(--tw-sidebar-border);">
+                    <h5 class="mb-0 fw-bold" style="color: var(--tw-accent);"><i class="bi bi-send-fill"></i> Нове повідомлення</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{% url 'messages' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="send">
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-uppercase" style="color: var(--tw-muted);">Одержувач (Абонент)</label>
+                            <select name="client_id" class="form-select select2-clients" required style="width: 100%;">
+                                <option value="all">📢 Надіслати ВСІМ абонентам</option>
+                                {% for client in clients %}
+                                    <option value="{{ client.id }}">
+                                        {{ client.full_name }} | Договір: {{ client.contract_number }} | {{ client.address|default:"" }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-uppercase" style="color: var(--tw-muted);">Тема повідомлення</label>
+                            <input type="text" name="subject" class="form-control" placeholder="Наприклад: Технічні роботи" required
+                                   style="background-color: var(--tw-input-bg); color: var(--tw-input-text); border: 1px solid var(--tw-input-border);">
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold text-uppercase" style="color: var(--tw-muted);">Текст (SMS / Email)</label>
+                            <textarea name="text" class="form-control" rows="5" placeholder="Введіть текст повідомлення..." required
+                                      style="background-color: var(--tw-input-bg); color: var(--tw-input-text); border: 1px solid var(--tw-input-border);"></textarea>
+                        </div>
+
+                        <button type="submit" class="btn w-100 fw-bold" style="background-color: var(--tw-accent); color: white;">
+                            <i class="bi bi-telegram"></i> Надіслати
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0" style="background-color: var(--tw-sidebar-bg); border: 1px solid var(--tw-sidebar-border) !important;">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center" style="background-color: transparent; border-bottom: 1px solid var(--tw-sidebar-border);">
+                    <h5 class="mb-0 fw-bold" style="color: var(--tw-accent);"><i class="bi bi-clock-history"></i> Історія розсилок</h5>
+                    <span class="badge" style="background-color: var(--tw-accent-soft); color: var(--tw-accent);">{{ history.count }} записів</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
+                        <table class="table table-hover align-middle mb-0" style="--bs-table-bg: transparent; --bs-table-color: var(--tw-text);">
+                            <thead style="position: sticky; top: 0; z-index: 1; background-color: var(--tw-nav-active);">
+                                <tr>
+                                    <th class="ps-4" style="color: var(--tw-muted);">Дата та час</th>
+                                    <th style="color: var(--tw-muted);">Кому</th>
+                                    <th style="color: var(--tw-muted);">Тема</th>
+                                    <th style="color: var(--tw-muted);">Статус</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for msg in history %}
+                                <tr data-bs-toggle="modal" data-bs-target="#msgModal{{ msg.id }}" style="cursor: pointer;" title="Натисніть, щоб переглянути деталі">
+                                    <td class="ps-4 small" style="color: var(--tw-muted);">{{ msg.sent_at|date:"d.m.Y H:i" }}</td>
+                                    <td>
+                                        {% if msg.target_client %}
+                                            <span class="fw-bold">{{ msg.target_client.full_name }}</span>
+                                        {% else %}
+                                            <span class="badge w-100" style="background-color: var(--tw-accent-soft); color: var(--tw-accent);">Усім абонентам</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold" style="color: var(--tw-accent);">{{ msg.subject }}</div>
+                                        <small class="text-truncate d-inline-block" style="max-width: 200px; color: var(--tw-muted);">
+                                            {{ msg.text }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                            <i class="bi bi-check2-all"></i> Надіслано
+                                        </span>
+                                    </td>
+                                </tr>
+
+                                <div class="modal fade" id="msgModal{{ msg.id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content border-0 shadow" style="background-color: var(--tw-sidebar-bg); color: var(--tw-text);">
+                                            <div class="modal-header" style="border-bottom: 1px solid var(--tw-sidebar-border);">
+                                                <h5 class="modal-title fw-bold" style="color: var(--tw-accent);">
+                                                    <i class="bi bi-envelope-open"></i> Деталі повідомлення
+                                                </h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="filter: invert(1) grayscale(100%) brightness(200%);"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p class="mb-1 small text-uppercase" style="color: var(--tw-muted);">Одержувач:</p>
+                                                <h6 class="fw-bold mb-3">
+                                                    {% if msg.target_client %}{{ msg.target_client.full_name }}{% else %}Усім абонентам{% endif %}
+                                                </h6>
+
+                                                <p class="mb-1 small text-uppercase" style="color: var(--tw-muted);">Дата відправки:</p>
+                                                <p class="mb-3">{{ msg.sent_at|date:"d.m.Y H:i:s" }}</p>
+
+                                                <p class="mb-1 small text-uppercase" style="color: var(--tw-muted);">Тема:</p>
+                                                <p class="fw-bold mb-3" style="color: var(--tw-accent);">{{ msg.subject }}</p>
+
+                                                <p class="mb-1 small text-uppercase" style="color: var(--tw-muted);">Текст повідомлення:</p>
+                                                <div class="p-3 rounded" style="white-space: pre-wrap; background-color: var(--tw-nav-hover); border: 1px solid var(--tw-sidebar-border);">{{ msg.text }}</div>
+                                            </div>
+                                            <div class="modal-footer d-flex justify-content-between" style="border-top: 1px solid var(--tw-sidebar-border);">
+                                                <form method="POST" action="{% url 'messages' %}" style="margin: 0;">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="action" value="delete">
+                                                    <input type="hidden" name="message_id" value="{{ msg.id }}">
+                                                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                        <i class="bi bi-trash"></i> Видалити запис
+                                                    </button>
+                                                </form>
+                                                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Закрити</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-5" style="color: var(--tw-muted);">
+                                        <i class="bi bi-mailbox display-4 d-block mb-2"></i>
+                                        Історія повідомлень порожня
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+<style>
+    /* 1. Головне поле вибору (до кліку) */
+    .select2-container--default .select2-selection--single {
+        background-color: var(--tw-sidebar-bg) !important;
+        border: 1px solid var(--tw-sidebar-border) !important;
+        border-radius: 6px;
+        height: 38px;
+        display: flex;
+        align-items: center;
+    }
+
+    /* 2. Текст обраного абонента */
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        color: var(--tw-text) !important; /* Тепер завжди контрастний */
+        line-height: normal;
+        padding-left: 12px;
+    }
+
+    /* 3. Колір стрілочки справа */
+    .select2-container--default .select2-selection--single .select2-selection__arrow b {
+        border-color: var(--tw-muted) transparent transparent transparent !important;
+    }
+
+    /* 4. Випадаюче вікно (саме меню) */
+    .select2-dropdown {
+        background-color: var(--tw-sidebar-bg) !important;
+        border: 1px solid var(--tw-sidebar-border) !important;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.2) !important;
+    }
+
+    /* 5. Поле вводу пошуку всередині меню */
+    .select2-search__field {
+        background-color: var(--tw-main-bg) !important;
+        color: var(--tw-text) !important;
+        border: 1px solid var(--tw-sidebar-border) !important;
+        border-radius: 4px;
+        padding: 4px 8px !important;
+    }
+
+    /* 6. Звичайні рядки з абонентами */
+    .select2-results__option {
+        color: var(--tw-text) !important;
+        background-color: transparent !important;
+    }
+
+    /* 7. Рядок, на який навели мишкою (HOVER) */
+    .select2-container--default .select2-results__option--highlighted[aria-selected],
+    .select2-container--default .select2-results__option--highlighted[aria-selected]:hover {
+        background-color: var(--tw-accent) !important; /* Фіолетовий/Синій фон */
+        color: #ffffff !important; /* Завжди білий текст для ідеальної видимості */
+    }
+
+    /* 8. Рядок, який вже був обраний раніше */
+    .select2-container--default .select2-results__option[aria-selected="true"] {
+        background-color: var(--tw-nav-active) !important;
+        color: var(--tw-accent) !important;
+        font-weight: bold;
+    }
+</style>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        // Ініціалізація розумного пошуку
+        $('.select2-clients').select2({
+            placeholder: "Шукати (ПІБ, договір, адреса)...",
+            allowClear: false,
+            language: {
+                noResults: function () {
+                    return "Абонента не знайдено :(";
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

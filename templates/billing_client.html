@@ -1,0 +1,552 @@
+{% extends 'base.html' %}
+{% block title %}{{ client.full_name }} | Білінг{% endblock %}
+{% block content %}
+
+<style>
+  [data-bs-theme="dark"] {
+    --tw-surface:#18181b; --tw-surface2:#1f1f23;
+    --tw-border:#2d2d35;  --tw-text:#efeff1;
+    --tw-muted:#adadb8;   --tw-row-hover:#1f1f23;
+    --tw-thead-bg:#1f1f23;--tw-card-bg:#18181b;
+  }
+  [data-bs-theme="light"] {
+    --tw-surface:#ffffff; --tw-surface2:#f6f6f7;
+    --tw-border:#e0e0e6;  --tw-text:#0e0e10;
+    --tw-muted:#6b6b7a;   --tw-row-hover:#f6f6f7;
+    --tw-thead-bg:#f0f0f3;--tw-card-bg:#ffffff;
+  }
+
+  .page-grid { display:grid; grid-template-columns:320px 1fr; gap:20px; align-items:start; }
+  @media(max-width:900px){ .page-grid{grid-template-columns:1fr;} }
+
+  /* ---- Ліва панель ---- */
+  .info-card {
+    background:var(--tw-card-bg); border:1px solid var(--tw-border);
+    border-radius:12px; overflow:hidden; position:sticky; top:80px;
+  }
+  .info-card-header {
+    background:var(--tw-surface2); border-bottom:1px solid var(--tw-border);
+    padding:16px 20px; display:flex; align-items:center; gap:12px;
+  }
+  .avatar-circle {
+    width:44px; height:44px; border-radius:50%;
+    background:var(--tw-accent-soft, rgba(0,136,204,.12));
+    color:var(--tw-accent,#0088cc);
+    display:flex; align-items:center; justify-content:center; font-size:1.3rem; flex-shrink:0;
+  }
+  .profile-name { color:var(--tw-text); font-size:1rem; font-weight:700; line-height:1.2; }
+  .profile-id   { color:var(--tw-muted); font-size:.72rem; margin-top:2px; font-weight:600; }
+
+  .info-rows { padding:0 20px; }
+  .info-row {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:10px 0; border-bottom:1px solid var(--tw-border); font-size:.83rem; gap:8px;
+  }
+  .info-row:last-child { border-bottom:none; }
+  .ir-label { color:var(--tw-muted); font-weight:500; flex-shrink:0; }
+  .ir-value { color:var(--tw-text); font-weight:600; text-align:right; word-break:break-all; }
+
+  .login-badge {
+    font-family:monospace; font-size:.82rem; font-weight:700;
+    background:var(--tw-surface2); border:1px solid var(--tw-border);
+    border-radius:4px; padding:2px 8px; color:var(--tw-text); cursor:pointer;
+    transition:border-color .15s;
+  }
+  .login-badge:hover { border-color:var(--tw-accent,#0088cc); }
+
+  .tw-badge { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:6px; font-size:.7rem; font-weight:700; }
+  .badge-active  { background:rgba(0,200,83,.12); color:#2f9e44; border:1px solid rgba(0,200,83,.25); }
+  .badge-blocked { background:rgba(235,4,0,.12);  color:#e03131; border:1px solid rgba(235,4,0,.25); }
+  .badge-promised{ background:rgba(255,179,26,.12);color:#e67700; border:1px solid rgba(255,179,26,.3); }
+
+  /* ---- Права панель ---- */
+  .main-panel { display:flex; flex-direction:column; gap:16px; }
+  .tw-box { background:var(--tw-card-bg); border:1px solid var(--tw-border); border-radius:12px; overflow:hidden; }
+  .box-header {
+    background:var(--tw-surface2); border-bottom:1px solid var(--tw-border);
+    padding:11px 18px; display:flex; align-items:center; gap:8px;
+  }
+  .box-header span { color:var(--tw-text); font-weight:700; font-size:.88rem; }
+  .box-body { padding:18px; }
+
+  /* Баланс */
+  .balance-row { display:flex; align-items:center; gap:20px; flex-wrap:wrap; margin-bottom:14px; }
+  .balance-block { display:flex; align-items:baseline; gap:5px; }
+  .balance-num { font-size:2.2rem; font-weight:900; line-height:1; }
+  .balance-pos { color:#00c853; }
+  .balance-neg { color:#eb0400; }
+  .balance-currency { font-size:1.1rem; font-weight:700; color:var(--tw-muted); }
+  .tariff-chip {
+    display:inline-flex; align-items:center; gap:6px;
+    background:var(--tw-surface2); border:1px solid var(--tw-border);
+    border-radius:8px; padding:5px 12px; font-size:.8rem; color:var(--tw-text);
+  }
+  .tariff-chip strong { color:var(--tw-accent,#0088cc); }
+
+  .promised-bar {
+    display:flex; align-items:center; gap:8px;
+    background:rgba(255,179,26,.1); border:1px solid rgba(255,179,26,.3);
+    border-radius:8px; padding:8px 14px; font-size:.82rem; color:#e67700; margin-bottom:14px;
+  }
+
+  .action-bar { display:flex; gap:8px; flex-wrap:wrap; }
+  .btn-act {
+    display:inline-flex; align-items:center; gap:6px;
+    border:none; border-radius:6px; padding:7px 14px;
+    font-size:.8rem; font-weight:700; cursor:pointer; transition:background .2s, transform .15s;
+    text-decoration:none;
+  }
+  .btn-act:hover { transform:translateY(-1px); }
+  .btn-blue   { background:#0088cc; color:#fff; }
+  .btn-blue:hover { background:#0077bb; color:#fff; }
+  .btn-orange { background:#e67700; color:#fff; }
+  .btn-orange:hover { background:#d66a00; }
+  .btn-purple { background:#7c3aed; color:#fff; }
+  .btn-purple:hover { background:#6d28d9; }
+  .btn-green  { background:#00c853; color:#fff; }
+  .btn-green:hover  { background:#00a843; }
+  .btn-red    { background:#eb0400; color:#fff; }
+  .btn-red:hover    { background:#c50000; }
+  .btn-gray   { background:var(--tw-surface2); color:var(--tw-text); border:1px solid var(--tw-border); }
+  .btn-gray:hover   { background:var(--tw-border); }
+
+  /* Таблиця платежів */
+  .hist-table { width:100%; border-collapse:collapse; font-size:.83rem; }
+  .hist-table th {
+    padding:8px 14px; color:var(--tw-muted); font-weight:600; font-size:.72rem;
+    text-transform:uppercase; letter-spacing:.6px;
+    border-bottom:1px solid var(--tw-border); text-align:left; background:var(--tw-surface2);
+  }
+  .hist-table td { padding:10px 14px; border-bottom:1px solid var(--tw-border); color:var(--tw-text); vertical-align:middle; }
+  .hist-table tr:last-child td { border-bottom:none; }
+  .hist-table tr:hover td { background:var(--tw-row-hover); }
+
+  .amount-pos { color:#00c853; font-weight:800; }
+  .amount-neg { color:#eb0400; font-weight:800; }
+  .amount-zero{ color:var(--tw-muted); font-weight:600; }
+
+  .type-chip {
+    display:inline-flex; align-items:center; gap:4px;
+    padding:2px 8px; border-radius:4px; font-size:.72rem; font-weight:700;
+  }
+  .type-topup   { background:rgba(0,200,83,.12);  color:#2f9e44; }
+  .type-charge  { background:rgba(235,4,0,.1);   color:#e03131; }
+  .type-promised{ background:rgba(255,179,26,.12);color:#e67700; }
+  .type-manual  { background:rgba(0,136,204,.1);  color:#0088cc; }
+
+  /* Модалки */
+  .modal-tw { background:var(--tw-card-bg); color:var(--tw-text); border:1px solid var(--tw-border); border-radius:14px; }
+  .form-label-tw { font-size:.8rem; font-weight:700; color:var(--tw-muted); margin-bottom:5px; display:block; }
+  .form-control-tw {
+    background:var(--tw-surface); border:1px solid var(--tw-border);
+    color:var(--tw-text); border-radius:6px; padding:7px 12px;
+    font-size:.88rem; width:100%;
+  }
+  .form-control-tw::placeholder { color:var(--tw-muted); }
+  .form-control-tw:focus { outline:none; border-color:#0088cc; box-shadow:0 0 0 3px rgba(0,136,204,.15); }
+  .form-select-tw {
+    background:var(--tw-surface); border:1px solid var(--tw-border);
+    color:var(--tw-text); border-radius:6px; padding:7px 12px;
+    font-size:.88rem; width:100%; font-weight:600;
+  }
+  .form-select-tw option { background:var(--tw-surface); color:var(--tw-text); }
+  .form-select-tw:focus { outline:none; border-color:#0088cc; }
+
+  .modal-footer-btns { display:flex; gap:10px; justify-content:flex-end; margin-top:4px; }
+
+  /* Toast */
+  #toast-wrap { position:fixed; bottom:24px; right:24px; z-index:9999; display:flex; flex-direction:column; gap:8px; pointer-events:none; }
+  .toast-item {
+    min-width:280px; padding:12px 18px; border-radius:10px;
+    font-size:.85rem; font-weight:600; box-shadow:0 4px 20px rgba(0,0,0,.2);
+    pointer-events:auto; animation:toastIn .3s ease;
+  }
+  @keyframes toastIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+  .toast-success { background:#00c853; color:#fff; }
+  .toast-warning { background:#e67700; color:#fff; }
+  .toast-error   { background:#eb0400; color:#fff; }
+</style>
+
+<nav style="margin-bottom:16px; font-size:.82rem; color:var(--tw-muted);">
+  <a href="{% url 'billing_dashboard' %}" style="color:var(--tw-accent,#0088cc); text-decoration:none; font-weight:600;">Білінг</a>
+  <span style="margin:0 6px;">›</span>
+  <span style="color:var(--tw-text);">{{ client.full_name }}</span>
+</nav>
+
+<div class="page-grid">
+
+  <div class="info-card">
+    <div class="info-card-header">
+      <div class="avatar-circle"><i class="bi bi-person-fill"></i></div>
+      <div>
+        <div class="profile-name">{{ client.full_name }}</div>
+        <div class="profile-id">{{ client.contract_number }}</div>
+      </div>
+    </div>
+
+    <div class="info-rows">
+      <div class="info-row">
+        <span class="ir-label">Статус</span>
+        {% if client.is_blocked %}
+          <span class="tw-badge badge-blocked"><i class="bi bi-slash-circle"></i> Заблокований</span>
+        {% elif promised %}
+          <span class="tw-badge badge-promised"><i class="bi bi-clock-fill"></i> Обіцяний платіж</span>
+        {% else %}
+          <span class="tw-badge badge-active"><i class="bi bi-check-circle"></i> Активний</span>
+        {% endif %}
+      </div>
+
+      <div class="info-row">
+        <span class="ir-label">Телефон</span>
+        <span class="ir-value">{{ client.phone }}</span>
+      </div>
+
+      <div class="info-row">
+        <span class="ir-label">Адреса</span>
+        <span class="ir-value" style="max-width:170px;">{{ client.address }}</span>
+      </div>
+
+      {% if client.onu_serial %}
+      <div class="info-row">
+        <span class="ir-label">ONU Serial</span>
+        <code class="login-badge" onclick="copyText('{{ client.onu_serial }}', 'ONU Serial')" title="Копіювати">{{ client.onu_serial }}</code>
+      </div>
+      {% endif %}
+
+      {% if client.equipment %}
+      <div class="info-row">
+        <span class="ir-label">IP-адреса</span>
+        <code class="login-badge" onclick="copyText('{{ client.equipment.ip_address }}', 'IP')" title="Копіювати">{{ client.equipment.ip_address }}</code>
+      </div>
+      {% if client.equipment.mac_address %}
+      <div class="info-row">
+        <span class="ir-label">MAC-адреса</span>
+        <code class="login-badge" onclick="copyText('{{ client.equipment.mac_address }}', 'MAC')" title="Копіювати">{{ client.equipment.mac_address }}</code>
+      </div>
+      {% endif %}
+      <div class="info-row">
+        <span class="ir-label">Обладнання</span>
+        <span class="ir-value" style="font-size:.75rem;">{{ client.equipment.name }}</span>
+      </div>
+      {% endif %}
+
+      <div class="info-row">
+        <span class="ir-label">Логін</span>
+        <code class="login-badge" onclick="copyText('{{ client.credentials.login }}', 'Логін')" title="Копіювати">{{ client.credentials.login }}</code>
+      </div>
+
+      <div class="info-row">
+        <span class="ir-label">Пароль</span>
+        <code class="login-badge" onclick="copyText('{{ client.credentials.password }}', 'Пароль')" title="Копіювати">{{ client.credentials.password }}</code>
+      </div>
+
+      <div class="info-row" style="border-top:none; padding-top:6px; padding-bottom:14px;">
+        <form method="POST" action="{% url 'regenerate_password' client.id %}" style="width:100%;">
+          {% csrf_token %}
+          <button type="submit" class="btn-act btn-gray w-100" style="justify-content:center; font-size:.75rem;">
+            <i class="bi bi-arrow-repeat"></i> Оновити пароль
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-panel">
+
+    <div class="tw-box">
+      <div class="box-header">
+        <i class="bi bi-wallet2" style="color:#0088cc;"></i>
+        <span>Фінансовий стан</span>
+      </div>
+      <div class="box-body">
+
+        {% if promised %}
+        <div class="promised-bar">
+          <i class="bi bi-clock-fill"></i>
+          Активний обіцяний платіж — доступ до <strong>&nbsp;{{ promised.expires_at|date:"d.m.Y" }}</strong>
+        </div>
+        {% endif %}
+
+        <div class="balance-row">
+          <div class="balance-block">
+            <div class="balance-num {% if client.account.balance >= 0 %}balance-pos{% else %}balance-neg{% endif %}">
+              {{ client.account.balance|floatformat:2 }}
+            </div>
+            <div class="balance-currency">₴</div>
+          </div>
+
+          <div class="tariff-chip">
+            <i class="bi bi-reception-4" style="color:var(--tw-accent,#0088cc);"></i>
+            {% if client.tariff %}
+              <strong>{{ client.tariff.name }}</strong>
+              <span style="color:var(--tw-muted);">{{ client.tariff.price }} ₴/міс · {{ client.tariff.speed }} Мбіт/с</span>
+            {% else %}
+              <span style="color:var(--tw-muted);">Тариф не підключено</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="action-bar">
+          <button type="button" class="btn-act btn-blue" data-bs-toggle="modal" data-bs-target="#topupModal">
+            <i class="bi bi-plus-circle-fill"></i> Поповнити
+          </button>
+          <button type="button" class="btn-act btn-orange" data-bs-toggle="modal" data-bs-target="#tariffModal">
+            <i class="bi bi-arrow-left-right"></i> Змінити тариф
+          </button>
+          <button type="button" class="btn-act btn-purple" data-bs-toggle="modal" data-bs-target="#promisedModal">
+            <i class="bi bi-clock-fill"></i> Обіцяний платіж
+          </button>
+
+          <form method="POST" action="{% url 'toggle_block' client.id %}" style="display:inline;">
+            {% csrf_token %}
+            {% if client.is_blocked %}
+              <button type="submit" class="btn-act btn-green"><i class="bi bi-unlock-fill"></i> Розблокувати</button>
+            {% else %}
+              <button type="submit" class="btn-act btn-red"><i class="bi bi-lock-fill"></i> Заблокувати</button>
+            {% endif %}
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="tw-box">
+      <div class="box-header">
+        <i class="bi bi-clock-history" style="color:#0088cc;"></i>
+        <span>Історія платежів та списань</span>
+        <span style="margin-left:auto; color:var(--tw-muted); font-size:.75rem;">Останні 50 записів</span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="hist-table">
+          <thead>
+            <tr>
+              <th>Дата / Час</th>
+              <th>Тип</th>
+              <th>Коментар</th>
+              <th>Оператор</th>
+              <th style="text-align:right;">Сума</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in payments %}
+            <tr>
+              <td style="white-space:nowrap; color:var(--tw-muted); font-size:.78rem;">
+                {{ p.created_at|date:"d.m.Y H:i" }}
+              </td>
+              <td>
+                {% if p.payment_type == 'topup' %}
+                  <span class="type-chip type-topup"><i class="bi bi-arrow-down-circle"></i> Поповнення</span>
+                {% elif p.payment_type == 'charge' %}
+                  <span class="type-chip type-charge"><i class="bi bi-arrow-up-circle"></i> Списання</span>
+                {% elif p.payment_type == 'promised' %}
+                  <span class="type-chip type-promised"><i class="bi bi-clock"></i> Обіцяний</span>
+                {% else %}
+                  <span class="type-chip type-manual"><i class="bi bi-pencil"></i> Ручна операція</span>
+                {% endif %}
+              </td>
+              <td style="color:var(--tw-muted); font-size:.8rem;">{{ p.comment|default:"—" }}</td>
+              <td style="color:var(--tw-muted); font-size:.78rem;">{{ p.created_by|default:"—" }}</td>
+              <td style="text-align:right; white-space:nowrap;">
+                {% if p.amount > 0 %}
+                  <span class="amount-pos">+{{ p.amount|floatformat:2 }} ₴</span>
+                {% elif p.amount < 0 %}
+                  <span class="amount-neg">{{ p.amount|floatformat:2 }} ₴</span>
+                {% else %}
+                  <span class="amount-zero">—</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5" style="text-align:center; padding:28px; color:var(--tw-muted);">
+                <i class="bi bi-inbox" style="font-size:1.4rem; display:block; margin-bottom:6px; opacity:.4;"></i>
+                Операцій ще немає
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="modal fade" id="topupModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:380px;">
+    <div class="modal-content modal-tw">
+      <div class="modal-header border-bottom-0 pb-0">
+        <h5 class="modal-title fw-bold"><i class="bi bi-cash-coin" style="color:#00c853;"></i> Поповнення рахунку</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form method="POST" action="{% url 'topup_balance' client.id %}">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label-tw">Сума поповнення (₴)</label>
+            <input type="number" name="amount" step="0.01" min="1" class="form-control-tw" placeholder="Напр. 250" required autofocus>
+          </div>
+          <div class="mb-3">
+            <label class="form-label-tw">Коментар (необов'язково)</label>
+            <input type="text" name="comment" class="form-control-tw" placeholder="Напр. Термінал EasyPay">
+          </div>
+          <div class="modal-footer-btns">
+            <button type="button" class="btn-act btn-gray" data-bs-dismiss="modal">Скасувати</button>
+            <button type="submit" class="btn-act btn-blue"><i class="bi bi-check2-circle"></i> Поповнити</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="tariffModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:400px;">
+    <div class="modal-content modal-tw">
+      <div class="modal-header border-bottom-0 pb-0">
+        <h5 class="modal-title fw-bold"><i class="bi bi-arrow-left-right" style="color:#0088cc;"></i> Зміна тарифного плану</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form method="POST" action="{% url 'change_tariff' client.id %}">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label-tw">Поточний тариф</label>
+            <div style="padding:7px 12px; background:var(--tw-surface2); border-radius:6px; font-size:.85rem; color:var(--tw-muted);">
+              {% if client.tariff %}{{ client.tariff.name }} — {{ client.tariff.price }} ₴/міс{% else %}Не підключено{% endif %}
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label-tw">Новий тариф</label>
+            <select name="tariff_id" class="form-select-tw">
+              {% for t in tariffs %}
+                <option value="{{ t.id }}" {% if client.tariff.id == t.id %}selected{% endif %}>
+                  {{ t.name }} — {{ t.price }} ₴/міс ({{ t.speed }} Мбіт/с)
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="modal-footer-btns">
+            <button type="button" class="btn-act btn-gray" data-bs-dismiss="modal">Скасувати</button>
+            <button type="submit" class="btn-act btn-orange"><i class="bi bi-check2-circle"></i> Змінити тариф</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="promisedModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:400px;">
+    <div class="modal-content modal-tw">
+      <div class="modal-header border-bottom-0 pb-0">
+        <h5 class="modal-title fw-bold"><i class="bi bi-clock-fill" style="color:#e67700;"></i> Обіцяний платіж</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        {% if promised %}
+        <div class="promised-bar mb-3">
+          <i class="bi bi-info-circle-fill"></i>
+          Вже є активний обіцяний платіж до <strong>{{ promised.expires_at|date:"d.m.Y" }}</strong>
+        </div>
+        {% else %}
+        <p style="font-size:.83rem; color:var(--tw-muted); margin-bottom:16px;">
+          Клієнт отримає тимчасовий доступ. Після закінчення терміну — автоматичне блокування.
+        </p>
+        <form method="POST" action="{% url 'promised_payment' client.id %}">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label-tw">Тип продовження</label>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;" id="promisedTypeWrap">
+              <label style="cursor:pointer; flex:1; min-width:120px;">
+                <input type="radio" name="promised_type" value="7days" checked style="display:none;" class="promised-radio">
+                <div class="promised-opt" data-val="7days" style="padding:8px 12px; border-radius:8px; border:2px solid var(--tw-accent,#0088cc); background:var(--tw-accent-soft,rgba(0,136,204,.1)); text-align:center; font-size:.8rem; font-weight:700; color:var(--tw-accent,#0088cc);">
+                  <i class="bi bi-calendar-week"></i><br>На 7 днів
+                </div>
+              </label>
+              <label style="cursor:pointer; flex:1; min-width:120px;">
+                <input type="radio" name="promised_type" value="custom" style="display:none;" class="promised-radio">
+                <div class="promised-opt" data-val="custom" style="padding:8px 12px; border-radius:8px; border:2px solid var(--tw-border); text-align:center; font-size:.8rem; font-weight:700; color:var(--tw-muted);">
+                  <i class="bi bi-calendar-date"></i><br>До дати
+                </div>
+              </label>
+            </div>
+          </div>
+          <div class="mb-3" id="customDateBlock" style="display:none;">
+            <label class="form-label-tw">Оберіть дату закінчення</label>
+            <input type="date" name="expires_date" id="promisedDatePicker" class="form-control-tw">
+          </div>
+          <div class="mb-3">
+            <label class="form-label-tw">Коментар (необов'язково)</label>
+            <input type="text" name="comment" class="form-control-tw" placeholder="Напр. Зарплата 15 числа">
+          </div>
+          <div class="modal-footer-btns">
+            <button type="button" class="btn-act btn-gray" data-bs-dismiss="modal">Скасувати</button>
+            <button type="submit" class="btn-act btn-purple"><i class="bi bi-clock-fill"></i> Активувати</button>
+          </div>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast-wrap">
+  {% for msg in messages %}
+  <div class="toast-item {% if msg.tags == 'error' %}toast-error{% elif msg.tags == 'warning' %}toast-warning{% else %}toast-success{% endif %}">
+    {{ msg }}
+  </div>
+  {% endfor %}
+</div>
+
+<script>
+// Копіювання в буфер
+function copyText(text, label) {
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('✅ ' + label + ' скопійовано: ' + text);
+  }).catch(() => {
+    showToast('❌ Не вдалося скопіювати', 'error');
+  });
+}
+
+// Toast
+function showToast(msg, type='success') {
+  const wrap = document.getElementById('toast-wrap');
+  const el = document.createElement('div');
+  el.className = 'toast-item toast-' + type;
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// Автоматичне приховування повідомлень Django
+document.querySelectorAll('.toast-item').forEach(el => {
+  setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .4s'; setTimeout(() => el.remove(), 400); }, 4000);
+});
+
+// Обіцяний платіж — вибір типу
+document.querySelectorAll('.promised-radio').forEach(radio => {
+  radio.addEventListener('change', function() {
+    document.querySelectorAll('.promised-opt').forEach(opt => {
+      opt.style.borderColor = 'var(--tw-border)';
+      opt.style.background = 'transparent';
+      opt.style.color = 'var(--tw-muted)';
+    });
+    const activeOpt = document.querySelector('.promised-opt[data-val="' + this.value + '"]');
+    activeOpt.style.borderColor = 'var(--tw-accent, #0088cc)';
+    activeOpt.style.background = 'var(--tw-accent-soft, rgba(0,136,204,.1))';
+    activeOpt.style.color = 'var(--tw-accent, #0088cc)';
+
+    document.getElementById('customDateBlock').style.display = this.value === 'custom' ? 'block' : 'none';
+  });
+});
+
+// Клік по картці вибору типу
+document.querySelectorAll('.promised-opt').forEach(opt => {
+  opt.addEventListener('click', function() {
+    const val = this.getAttribute('data-val');
+    document.querySelector('.promised-radio[value="' + val + '"]').checked = true;
+    document.querySelector('.promised-radio[value="' + val + '"]').dispatchEvent(new Event('change'));
+  });
+});
+</script>
+{% endblock %}

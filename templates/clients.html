@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block title %}Абоненти | UIC-Manager{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-secondary"><i class="bi bi-people-fill"></i> Реєстр абонентів</h2>
+        <a href="/admin/infrastructure/client/add/" class="btn btn-primary btn-sm shadow-sm">
+            <i class="bi bi-person-plus-fill"></i> Додати абонента
+        </a>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <form method="GET" action="{% url 'clients' %}" class="row g-3 align-items-center">
+                <div class="col-md-10">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                        <input type="text" name="search" value="{{ search_query }}" class="form-control" placeholder="Пошук за ПІБ, договором, адресою або серійним номером ONU...">
+                    </div>
+                </div>
+                <div class="col-md-2 d-grid">
+                    <button type="submit" class="btn btn-primary fw-bold">Знайти</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light text-secondary">
+                        <tr>
+                            <th class="ps-4">ПІБ клієнта</th>
+                            <th>Серійний номер ONU</th>
+                            <th>Номер договору</th>
+                            <th>Адреса підключення</th>
+                            <th>Статус</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for client in clients %}
+                        <tr>
+                            <td class="ps-4 fw-bold">
+                                <a href="{% url 'client_detail' client.id %}" class="text-decoration-none text-primary">
+                                    {{ client.full_name }}
+                                </a>
+                            </td>
+                            <td><code class="text-success fw-bold">{{ client.onu_serial }}</code></td>
+                            <td>{{ client.contract_number }}</td>
+                            <td class="small text-muted">{{ client.address }}</td>
+                            <td>
+                                {% if client.is_online %}
+                                    <span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle">
+                                        <i class="bi bi-check-circle"></i> Online
+                                    </span>
+                                {% else %}
+                                    <span class="badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle">
+                                        <i class="bi bi-exclamation-triangle"></i> Offline
+                                    </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">
+                                <i class="bi bi-search display-4 d-block mb-2"></i>
+                                За вашим запитом нічого не знайдено.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

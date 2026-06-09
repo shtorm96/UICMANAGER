@@ -1,0 +1,281 @@
+{% extends 'base.html' %}
+{% block title %}Головна | UIC-Manager{% endblock %}
+{% block content %}
+
+<style>
+  /* === TWITCH-STYLE з підтримкою Bootstrap тем === */
+  [data-bs-theme="dark"] {
+    --tw-surface:   #18181b;
+    --tw-surface2:  #1f1f23;
+    --tw-border:    #2d2d35;
+    --tw-text:      #efeff1;
+    --tw-muted:     #adadb8;
+    --tw-row-hover: #1f1f23;
+    --tw-thead-bg:  #1f1f23;
+    --tw-card-bg:   #18181b;
+  }
+  [data-bs-theme="light"] {
+    --tw-surface:   #ffffff;
+    --tw-surface2:  #f6f6f7;
+    --tw-border:    #e0e0e6;
+    --tw-text:      #0e0e10;
+    --tw-muted:     #6b6b7a;
+    --tw-row-hover: #f6f6f7;
+    --tw-thead-bg:  #f0f0f3;
+    --tw-card-bg:   #ffffff;
+  }
+
+  --tw-purple:      #9147ff;
+  --tw-purple2:     #772ce8;
+  --tw-purple-soft: rgba(145, 71, 255, 0.13);
+  --tw-live:        #eb0400;
+  --tw-green:       #00c853;
+  --tw-yellow:      #ffb31a;
+
+  .dash-header { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
+  .dash-header h2 { color: var(--tw-text); font-size: 1.5rem; font-weight: 700; margin: 0; }
+
+  .live-pill {
+    background: var(--tw-live); color: #fff;
+    font-size: 0.7rem; font-weight: 700; letter-spacing: 1px;
+    padding: 3px 10px; border-radius: 4px; text-transform: uppercase;
+    animation: livepulse 2s infinite;
+  }
+  @keyframes livepulse { 0%,100%{opacity:1} 50%{opacity:0.65} }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+  .stat-card {
+    background: var(--tw-card-bg); border: 1px solid var(--tw-border);
+    border-radius: 12px; padding: 20px 22px; position: relative; overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(0,0,0,0.13); }
+  .stat-card::before { content:''; position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: 12px 12px 0 0; }
+  .stat-card.purple::before { background: #9147ff; }
+  .stat-card.green::before  { background: #00c853; }
+  .stat-card.red::before    { background: #eb0400; }
+  .stat-card.yellow::before { background: #ffb31a; }
+
+  .stat-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; margin-bottom: 14px; }
+  .stat-card.purple .stat-icon { background: rgba(145,71,255,0.13); color: #9147ff; }
+  .stat-card.green  .stat-icon { background: rgba(0,200,83,0.12);   color: #00c853; }
+  .stat-card.red    .stat-icon { background: rgba(235,4,0,0.12);    color: #eb0400; }
+  .stat-card.yellow .stat-icon { background: rgba(255,179,26,0.12); color: #ffb31a; }
+
+  .stat-label { color: var(--tw-muted); font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px; }
+  .stat-value { color: var(--tw-text); font-size: 2rem; font-weight: 800; line-height: 1; }
+  .stat-dot { position: absolute; top: 18px; right: 18px; width: 8px; height: 8px; border-radius: 50%; animation: livepulse 2s infinite; }
+  .stat-card.green .stat-dot { background: #00c853; box-shadow: 0 0 8px #00c853; }
+  .stat-card.red   .stat-dot { background: #eb0400; box-shadow: 0 0 8px #eb0400; }
+
+  .tickets-card { background: var(--tw-card-bg); border: 1px solid var(--tw-border); border-radius: 12px; overflow: hidden; }
+  .tickets-header { display: flex; align-items: center; gap: 10px; padding: 16px 20px; border-bottom: 1px solid var(--tw-border); background: var(--tw-surface2); }
+  .tickets-header span { color: var(--tw-text); font-weight: 700; font-size: 0.95rem; }
+  .count-badge { background: rgba(145,71,255,0.13); color: #9147ff; font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 20px; border: 1px solid rgba(145,71,255,0.3); }
+  .emergency-count-badge { background: rgba(235,4,0,0.12); color: #eb0400; font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 20px; border: 1px solid rgba(235,4,0,0.3); }
+
+  .tw-table { width: 100%; border-collapse: collapse; }
+  .tw-table thead tr { background: var(--tw-thead-bg); }
+  .tw-table thead th { padding: 10px 16px; color: var(--tw-muted); font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.7px; border-bottom: 1px solid var(--tw-border); text-align: left; }
+  .tw-table tbody tr { border-bottom: 1px solid var(--tw-border); transition: background 0.15s; }
+  .tw-table tbody tr:last-child { border-bottom: none; }
+  .tw-table tbody tr:hover { background: var(--tw-row-hover); }
+  .tw-table td { padding: 13px 16px; color: var(--tw-text); font-size: 0.88rem; vertical-align: middle; }
+
+  .ticket-id { color: #9147ff; font-weight: 700; font-size: 0.85rem; }
+  .ticket-name { font-weight: 600; color: var(--tw-text); }
+  .ticket-addr { color: var(--tw-muted); font-size: 0.75rem; margin-top: 2px; }
+
+  .tw-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; }
+  .tw-badge::before { content:''; width:6px; height:6px; border-radius:50%; }
+  .badge-high { background: rgba(235,4,0,0.13); color: #e03131; border: 1px solid rgba(235,4,0,0.25); }
+  .badge-high::before { background: #e03131; }
+  .badge-new { background: rgba(145,71,255,0.13); color: #7048e8; border: 1px solid rgba(145,71,255,0.3); }
+  .badge-new::before { background: #7048e8; animation: livepulse 2s infinite; }
+  .badge-process { background: rgba(255,179,26,0.13); color: #e67700; border: 1px solid rgba(255,179,26,0.3); }
+  .badge-process::before { background: #e67700; animation: livepulse 1.5s infinite; }
+  .badge-done { background: rgba(0,200,83,0.1); color: #2f9e44; border: 1px solid rgba(0,200,83,0.25); }
+  .badge-done::before { background: #2f9e44; }
+
+  .empty-state { text-align: center; padding: 32px; color: var(--tw-muted); }
+  .empty-state i { font-size: 2rem; display: block; margin-bottom: 6px; opacity: 0.4; }
+
+  @media (max-width: 900px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px) { .stat-grid { grid-template-columns: 1fr; } }
+</style>
+
+<div>
+  <div class="dash-header">
+    <h2><i class="bi bi-speedometer2 me-2" style="color:#9147ff;"></i>Дашборд</h2>
+    <span class="live-pill">● Live</span>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card purple">
+      <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
+      <div class="stat-label">Всього абонентів</div>
+      <div class="stat-value">{{ total_clients }}</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-dot"></div>
+      <div class="stat-icon"><i class="bi bi-wifi"></i></div>
+      <div class="stat-label">Абоненти онлайн</div>
+      <div class="stat-value">{{ online_clients }}</div>
+    </div>
+    <div class="stat-card red">
+      <div class="stat-dot"></div>
+      <div class="stat-icon"><i class="bi bi-wifi-off"></i></div>
+      <div class="stat-label">Абоненти офлайн</div>
+      <div class="stat-value">{{ offline_clients }}</div>
+    </div>
+    <div class="stat-card yellow">
+      <div class="stat-icon"><i class="bi bi-tools"></i></div>
+      <div class="stat-label">Активні заявки</div>
+      <div class="stat-value">{{ new_tickets }}</div>
+    </div>
+  </div>
+
+  <div class="tickets-card mb-4 border-danger" style="box-shadow: 0 0 15px rgba(235,4,0,0.05);">
+    <div class="tickets-header" style="background: rgba(235,4,0,0.04);">
+        <i class="bi bi-exclamation-triangle-fill" style="color:#eb0400; font-size:1.1rem;"></i>
+        <span class="text-danger fw-bold">Критичні аварії / Обриви магістралей</span>
+        <span class="emergency-count-badge ms-2">{{ active_emergencies|length }} активних</span>
+        <button type="button" class="btn btn-danger btn-sm ms-auto fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#newEmergencyModal">
+            <i class="bi bi-lightning-charge-fill"></i> Сповістити про аварію
+        </button>
+    </div>
+    <table class="tw-table">
+      <thead>
+        <tr>
+          <th>Локація / Адреса</th><th>Опис руйнування</th><th>Призначена бригада</th><th>Статус</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for emergency in active_emergencies %}
+        <tr>
+          <td><span class="fw-bold text-danger"><i class="bi bi-geo-alt-fill"></i> {{ emergency.address }}</span></td>
+          <td class="text-muted small">{{ emergency.description }}</td>
+          <td>
+            <div class="small fw-bold">
+                {% for worker in emergency.assignees.all %}
+                    <span class="badge bg-secondary text-light mb-1"><i class="bi bi-person"></i> {{ worker.full_name|truncatechars:18 }}</span>
+                {% empty %}
+                    <span class="text-danger small"><i class="bi bi-slash-circle"></i> Не призначено</span>
+                {% endfor %}
+            </div>
+          </td>
+          <td>
+            {% if emergency.status == 'new' %}
+                <span class="tw-badge badge-high animate-pulse">Критична</span>
+            {% elif emergency.status == 'in_progress' %}
+                <span class="tw-badge badge-process">Усувається</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="4">
+            <div class="empty-state text-success py-3">
+              <i class="bi bi-shield-check" style="font-size: 1.5rem; color:#00c853; opacity:1;"></i>
+              Магістральна мережа працює в штатному режимі. Обривів не виявлено.
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="tickets-card">
+    <div class="tickets-header">
+      <i class="bi bi-list-task" style="color:#9147ff; font-size:1.1rem;"></i>
+      <span>Оперативні заявки (Підключення / Ремонт)</span>
+      <span class="count-badge ms-auto">{{ active_applications|length }} в обробці</span>
+    </div>
+    <table class="tw-table">
+      <thead>
+        <tr>
+          <th>ID</th><th>Абонент / Телефон</th><th>Адреса</th><th>Тип завдання</th><th>Статус</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for app in active_applications %}
+        <tr>
+          <td><span class="ticket-id">#{{ app.id }}</span></td>
+          <td>
+            <div class="ticket-name">{{ app.full_name }}</div>
+            <div class="ticket-addr">{{ app.phone }}</div>
+          </td>
+          <td>{{ app.city }}, вул. {{ app.street }}, {{ app.house_number }}</td>
+          <td>
+            {% if app.task_type == 'connection' %}Підключення
+            {% elif app.task_type == 'repair' %}Ремонт
+            {% elif app.task_type == 'cctv' %}Відеонагляд
+            {% else %}Інше{% endif %}
+          </td>
+          <td>
+            {% if app.status == 'new' %}
+                <span class="tw-badge badge-new">Нова</span>
+            {% elif app.status == 'agreed' %}
+                <span class="tw-badge badge-process">В роботі</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5">
+                <div class="empty-state">
+                    <i class="bi bi-check2-circle text-success" style="opacity: 1;"></i>
+                    Усі оперативні заявки опрацьовані!
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="modal fade" id="newEmergencyModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered">
+        <div class="modal-content shadow-lg" style="background: var(--tw-surface); border: 1px solid var(--tw-border);">
+            <div class="modal-body p-4">
+                <div class="d-flex align-items-center gap-2 mb-3 border-bottom pb-2" style="border-color: var(--tw-border) !important;">
+                    <i class="bi bi-exclamation-octagon-fill text-danger fs-4"></i>
+                    <h4 class="m-0 fw-bold" style="color: var(--tw-text);">Фіксація аварії мережі</h4>
+                </div>
+                <form method="POST" action="{% url 'create_emergency' %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold" style="color: var(--tw-text);">Точна адреса або ділянка магістралі:</label>
+                        <input type="text" name="address" class="form-control" style="background: var(--tw-surface2); color: var(--tw-text); border: 1px solid var(--tw-border);" placeholder="Напр. м. Васильків, вул. Грушевського, муфта №12" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold" style="color: var(--tw-text);">Деталі руйнування / симптоми:</label>
+                        <textarea name="description" class="form-control" style="background: var(--tw-surface2); color: var(--tw-text); border: 1px solid var(--tw-border);" rows="3" placeholder="Напр. Обірвано кабель ТКО деревом, немає сигналу на 4 будинках" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold d-block mb-2" style="color: var(--tw-text);">Терміново призначити техніків (можна кількох):</label>
+                        <div class="p-3 border rounded overflow-auto" style="background: var(--tw-surface2); border-color: var(--tw-border) !important; max-height: 160px;">
+                            {% for worker in installers %}
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="installers" value="{{ worker.id }}" id="worker_{{ worker.id }}">
+                                <label class="form-check-label small fw-semibold" for="worker_{{ worker.id }}" style="color: var(--tw-text);">
+                                    <i class="bi bi-person-badge text-primary me-1"></i> {{ worker.full_name }} ({{ worker.get_position_display|default:"Монтажник" }})
+                                </label>
+                            </div>
+                            {% empty %}
+                            <p class="text-muted small m-0">Вільних монтажників у базі не знайдено</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <button type="button" class="btn btn-secondary btn-sm fw-bold" data-bs-dismiss="modal">Скасувати</button>
+                        <button type="submit" class="btn btn-danger btn-sm fw-bold px-3"><i class="bi bi-send-check"></i> Вислати бригаду</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

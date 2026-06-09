@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block title %}Абонент: {{ client.full_name }} | UIC-Manager{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'clients' %}">Абоненти</a></li>
+        <li class="breadcrumb-item active">{{ client.full_name }}</li>
+      </ol>
+    </nav>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 text-primary fw-bold"><i class="bi bi-person-badge"></i> Дані абонента</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-1 text-muted small text-uppercase">ПІБ:</p>
+                    <h5 class="fw-bold">{{ client.full_name }}</h5>
+                    <hr>
+                    <p class="mb-1 text-muted small text-uppercase">Статус підключення:</p>
+                    {% if client.is_online %}
+                        <span class="badge bg-success mb-3">Online (ONU активна)</span>
+                    {% else %}
+                        <span class="badge bg-danger mb-3">Offline (Сигнал відсутній)</span>
+                    {% endif %}
+                    <p class="mb-1 text-muted small text-uppercase">Договір:</p>
+                    <p class="fw-bold">{{ client.contract_number }}</p>
+                    <p class="mb-1 text-muted small text-uppercase">ONU Serial:</p>
+                    <code class="text-success fw-bold d-block mb-3">{{ client.onu_serial }}</code>
+                    <p class="mb-1 text-muted small text-uppercase">Телефон:</p>
+                    <p>{{ client.phone }}</p>
+                    <p class="mb-1 text-muted small text-uppercase">Адреса:</p>
+                    <p>{{ client.address }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 text-primary fw-bold"><i class="bi bi-clock-history"></i> Історія звернень</h5>
+                    <a href="/admin/infrastructure/ticket/add/?client={{ client.id }}" class="btn btn-outline-primary btn-sm">Створити заявку</a>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">№</th>
+                                <th>Дата</th>
+                                <th>Проблема</th>
+                                <th>Статус</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ticket in tickets %}
+                            <tr>
+                                <td class="ps-4">#{{ ticket.id }}</td>
+                                <td>{{ ticket.created_at|date:"d.m.Y H:i" }}</td>
+                                <td>{{ ticket.description }}</td>
+                                <td>
+                                    {% if ticket.status == 'new' %}
+                                        <span class="badge bg-primary">Нова</span>
+                                    {% elif ticket.status == 'process' %}
+                                        <span class="badge bg-warning text-dark">В роботі</span>
+                                    {% else %}
+                                        <span class="badge bg-success">Виконана</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-4 text-muted">Заявок ще не було</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
