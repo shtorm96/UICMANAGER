@@ -1,6 +1,7 @@
 import os
 import django
 import random
+import string
 
 # Налаштовуємо зв'язок нашого скрипта з твоїм сайтом
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
@@ -9,6 +10,12 @@ django.setup()
 # Імпортуємо наші таблиці та бібліотеку Faker
 from infrastructure.models import Equipment, Client
 from faker import Faker
+
+
+def generate_onu_serial():
+    vendor = random.choice(['ZTEG', 'HWTC', 'ALCL', 'GPON'])
+    random_hex = ''.join(random.choices(string.hexdigits.upper(), k=8))
+    return f"{vendor}{random_hex}"
 
 
 def generate_fake_clients(count=100):
@@ -38,7 +45,7 @@ def generate_fake_clients(count=100):
             equipment=random.choice(equipments),
             is_online=random.choice([True, False])
         )
-    print(f"✅ Успішно додано {count} абонентів у форматі ПІБ!")і
+    print(f"✅ Успішно додано {count} абонентів у форматі ПІБ!")
 
 
 if __name__ == '__main__':

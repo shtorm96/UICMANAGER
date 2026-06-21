@@ -3,8 +3,8 @@
 
 {% block content %}
 <div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="text-body"><i class="bi bi-list-task text-primary"></i> Журнал завдань та робіт</h2>
+    <div class="dash-header justify-content-between">
+        <h2><i class="bi bi-list-task"></i> Журнал завдань та робіт</h2>
     </div>
 
     <ul class="nav nav-pills mb-4" id="taskTabs" role="tablist">
@@ -33,7 +33,7 @@
             <div class="card shadow-sm border-0">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
-                        <thead class="table-secondary">
+                        <thead style="background-color: var(--tw-nav-active); color: var(--tw-muted);">
                             <tr>
                                 <th>Тип</th>
                                 <th>Клієнт / Об'єкт</th>
@@ -44,7 +44,7 @@
                         </thead>
                         <tbody>
                             {% for em in pending_emergencies %}
-                            <tr class="table-danger">
+                            <tr style="background: rgba(235,4,0,0.10);">
                                 <td><span class="badge text-bg-danger"><i class="bi bi-lightning-charge-fill"></i> Аварія</span><br><small class="text-body-secondary">{{ em.created_at|date:"d.m.Y H:i" }}</small></td>
                                 <td><strong>Магістраль/Вузол</strong></td>
                                 <td><strong class="text-danger">{{ em.address }}</strong></td>
@@ -90,7 +90,7 @@
             <div class="card shadow-sm border-0">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
-                        <thead class="table-secondary">
+                        <thead style="background-color: var(--tw-nav-active); color: var(--tw-muted);">
                             <tr>
                                 <th>Дата / Виконавець</th>
                                 <th>Клієнт / Об'єкт</th>
@@ -101,7 +101,7 @@
                         </thead>
                         <tbody>
                             {% for em in planned_emergencies %}
-                            <tr class="table-warning">
+                            <tr style="background: rgba(255,179,26,0.12);">
                                 <td><strong class="text-danger">Невідкладно</strong><br><small class="text-body-secondary">Монтажники: {% for a in em.assignees.all %}{{ a.full_name }}{% empty %}Не призначено{% endfor %}</small></td>
                                 <td><strong><span class="badge text-bg-danger">АВАРІЯ</span></strong></td>
                                 <td>{{ em.address }}</td>
@@ -116,12 +116,17 @@
 
                             {% for app in planned_apps %}
                             <tr>
-                                <td><strong class="text-primary">{{ app.planned_date|date:"d.m.Y"|default:"Дата не вказана" }}</strong><br><small class="text-body-secondary"><i class="bi bi-person"></i> {{ app.assignee.full_name|default:"Інша персона" }}</small></td>
+                                <td><strong class="text-primary">{{ app.planned_date|date:"d.m.Y"|default:"Дата не вказана" }}</strong><br><small class="text-body-secondary"><i class="bi bi-person"></i> {{ app.assignee.full_name|default:"Не призначено" }}</small></td>
                                 <td><strong>{{ app.full_name }}</strong><br><small class="text-body-secondary">{{ app.phone }}</small></td>
-                                <td>{{ app.city }}, вул. {{ app.street }}</td>
+                                <td>{{ app.city }}, вул. {{ app.street }}, {{ app.house_number }}</td>
                                 <td>{{ app.comment }}</td>
                                 <td class="text-end">
                                     <div class="d-flex gap-2 justify-content-end">
+                                        {% if not app.assignee or not app.planned_date %}
+                                        <button class="btn btn-sm btn-outline-primary fw-bold assign-btn" data-type="application" data-id="{{ app.id }}" data-bs-toggle="modal" data-bs-target="#assignModal" title="Призначити виконавця / дату">
+                                            <i class="bi bi-person-gear"></i> Призначити
+                                        </button>
+                                        {% endif %}
                                         <form method="POST">{% csrf_token %}<input type="hidden" name="action" value="cancel"><input type="hidden" name="task_type" value="application"><input type="hidden" name="task_id" value="{{ app.id }}">
                                             <button type="submit" class="btn btn-sm btn-outline-danger fw-bold" title="Скасувати / Відмова">Відміна</button>
                                         </form>
@@ -146,7 +151,7 @@
             <div class="card shadow-sm border-0">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
-                        <thead class="table-secondary">
+                        <thead style="background-color: var(--tw-nav-active); color: var(--tw-muted);">
                             <tr>
                                 <th>Статус</th>
                                 <th>Клієнт / Локація</th>
@@ -175,7 +180,7 @@
                                     {% endif %}
                                 </td>
                                 <td><strong>{{ app.full_name }}</strong><br><small class="text-body-secondary">{{ app.phone }}</small></td>
-                                <td>{{ app.city }}, вул. {{ app.street }}</td>
+                                <td>{{ app.city }}, вул. {{ app.street }}, {{ app.house_number }}</td>
                                 <td>{{ app.comment }}</td>
                             </tr>
                             {% endfor %}

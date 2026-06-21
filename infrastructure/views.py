@@ -1,11 +1,10 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q, Value, CharField, Sum
+from django.db.models import Q
 from django.contrib import messages
-from itertools import chain
 from .models import (
-    Client, Equipment, Ticket, WarehouseItem, MessageLog,
-    Tariff, Employee, ConnectionApplication, Product, Sale, EmergencyTask, ClientCredentials
+    Client, MessageLog,
+    Tariff, Employee, ConnectionApplication, Product, Sale, EmergencyTask
 )
 
 
@@ -146,82 +145,6 @@ def tasks_view(request):
     })
 
 
-# ================= ОНОВЛЕНИЙ ГОЛОВНИЙ БІЛІНГ =================
-@login_required
-def billing_dashboard_view(request):
-    search_query = request.GET.get('search', '')
-    status_filter = request.GET.get('status', '')
-
-    clients = Client.objects.all()
-
-    # 1. Пошук
-    if search_query:
-        clients = clients.filter(
-            Q(full_name__icontains=search_query) |
-            Q(contract_number__icontains=search_query)
-        )
-
-    # 2. Фільтрація за статусами
-    if status_filter == 'active':
-        clients = clients.filter(is_blocked=False)
-    elif status_filter == 'blocked':
-        clients = clients.filter(is_blocked=True)
-    elif status_filter == 'negative':
-        # Оскільки моделі рахунків немає, для уникнення порожньої сторінки показуємо заблокованих (боржників)
-        clients = clients.filter(is_blocked=True)
-
-    # 3. Розрахунок статистики динамічно на основі тарифів
-    active_clients = Client.objects.filter(is_blocked=False)
-    monthly_income = 0
-    for cl in active_clients:
-        if cl.tariff:
-            monthly_income += cl.tariff.price
-
-    blocked_count = Client.objects.filter(is_blocked=True).count()
-    total_clients_count = Client.objects.count()
-
-    return render(request, 'billing.html', {
-        'clients': clients,
-        'search': search_query,
-        'status_filter': status_filter,
-        'total_balance': monthly_income * 1.5,  # Імітуємо баланс для краси картки
-        'monthly_income': monthly_income,
-        'blocked_count': blocked_count,
-        'negative_count': blocked_count,  # Прив'язуємо до боргу
-    })
-
-
-# ================= ДЕТАЛЬНА КАРТКА КЛІЄНТА В БІЛІНГУ =================
-@login_required
-def billing_client_view(request, client_id):
-    client = get_object_or_404(Client, id=client_id)
-
-    # Обробка дій у картці абонента (Поповнення, зміна тарифу, блокування)
-    if request.method == 'POST':
-        action = request.POST.get('action')
-        if action == 'toggle_block':
-            client.is_blocked = not client.is_blocked
-            client.save()
-            messages.success(request, f"Статус абонента змінено успішно!")
-        elif action == 'change_tariff':
-            tariff_id = request.POST.get('tariff_id')
-            if tariff_id:
-                client.tariff_id = tariff_id
-                client.save()
-                messages.success(request, "Тарифний план оновлено.")
-        elif action == 'topup':
-            amount = request.POST.get('amount')
-            messages.success(request, f"Рахунок успішно поповнено на {amount} ₴ (Демо-режим)")
-
-        return redirect('billing_client', client_id=client.id)
-
-    tariffs = Tariff.objects.all().order_by('price')
-    return render(request, 'billing_client.html', {
-        'client': client,
-        'tariffs': tariffs
-    })
-
-
 @login_required
 def client_list_view(request):
     search_query = request.GET.get('search', '')
@@ -234,7 +157,21 @@ def client_list_view(request):
 @login_required
 def client_detail_view(request, pk):
     client = get_object_or_404(Client, pk=pk)
-    return render(request, 'client_detail.html', {'client': client, 'tickets': client.tickets.all()})
+
+    # Найкращий розбір адреси клієнта для підстановки у формі заявки на ремонт
+    address_parts = [p.strip() for p in client.address.split(',')] if client.address else []
+    prefill_city = address_parts[0] if len(address_parts) > 0 else ''
+    prefill_street = address_parts[1] if len(address_parts) > 1 else ''
+    if prefill_street.lower().startswith('вул.'):
+        prefill_street = prefill_street[4:].strip()
+    prefill_house = ', '.join(address_parts[2:]) if len(address_parts) > 2 else ''
+
+    return render(request, 'client_detail.html', {
+        'client': client,
+        'prefill_city': prefill_city,
+        'prefill_street': prefill_street,
+        'prefill_house': prefill_house,
+    })
 
 
 @login_required
@@ -275,19 +212,40 @@ def tariffs_view(request):
 
 @login_required
 def personnel_view(request):
-    return render(request, 'personnel.html', {'employees': Employee.objects.all().order_by('position')})
+    role_filter = request.GET.get('role', 'all')
+    employees = Employee.objects.all().order_by('position')
+    if role_filter and role_filter != 'all':
+        employees = employees.filter(position=role_filter)
+    return render(request, 'personnel.html', {
+        'employees': employees,
+        'positions': Employee.POSITION_CHOICES,
+        'current_filter': role_filter,
+    })
 
 
 @login_required
 def messages_view(request):
     if request.method == 'POST':
+        action = request.POST.get('action', 'send')
+
+        if action == 'delete':
+            message_id = request.POST.get('message_id')
+            MessageLog.objects.filter(id=message_id).delete()
+            messages.success(request, "Запис видалено.")
+            return redirect('messages')
+
         client_id = request.POST.get('client_id')
-        msg_text = request.POST.get('message')
+        subject = request.POST.get('subject', '')
+        msg_text = request.POST.get('text')
 
         if client_id and msg_text:
-            client = get_object_or_404(Client, id=client_id)
-            MessageLog.objects.create(client=client, message=msg_text)
-            messages.success(request, f"Повідомлення для {client.full_name} успішно відправлено!")
+            if client_id == 'all':
+                MessageLog.objects.create(target_client=None, subject=subject, text=msg_text)
+                messages.success(request, "Повідомлення надіслано всім абонентам!")
+            else:
+                client = get_object_or_404(Client, id=client_id)
+                MessageLog.objects.create(target_client=client, subject=subject, text=msg_text)
+                messages.success(request, f"Повідомлення для {client.full_name} успішно відправлено!")
 
         return redirect('messages')
 

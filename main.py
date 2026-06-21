@@ -6,7 +6,7 @@ import string
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 django.setup()
 
-from infrastructure.models import Equipment, Client, Ticket
+from infrastructure.models import Equipment, Client
 from faker import Faker
 
 
@@ -25,11 +25,6 @@ def generate_fake_data(count=50):
         return
 
     print(f"⏳ Наповнюємо базу...")
-
-    problems = [
-        "Немає інтернету", "Низька швидкість", "Червоний вогник на ONU",
-        "Кабель перебито", "Налаштування роутера", "Поганий сигнал Wi-Fi"
-    ]
 
     for _ in range(count):
         serial = generate_onu_serial()
@@ -52,16 +47,7 @@ def generate_fake_data(count=50):
             is_online=random.choice([True, False])
         )
 
-        # Кожному 4-му клієнту створюємо заявку
-        if random.random() < 0.25:
-            Ticket.objects.create(
-                client=client,
-                description=random.choice(problems),
-                status=random.choice(['new', 'process', 'closed']),
-                priority=random.choice(['low', 'medium', 'high'])
-            )
-
-    print(f"✅ База готова: {count} абонентів та пачка заявок.")
+    print(f"✅ База готова: {count} абонентів.")
 
 
 if __name__ == '__main__':

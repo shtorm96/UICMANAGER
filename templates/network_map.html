@@ -20,6 +20,20 @@
         border: 1px solid var(--tw-sidebar-border);
         border-radius: 8px;
     }
+    .map-legend {
+        background-color: var(--tw-sidebar-bg);
+        color: var(--tw-text);
+        border: 1px solid var(--tw-sidebar-border);
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-size: 0.8rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+        min-width: 190px;
+    }
+    .map-legend h6 { font-size: 0.78rem; font-weight: 800; margin: 0 0 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .map-legend-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+    .map-legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+    .map-legend-count { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--tw-sidebar-border); font-weight: 700; }
 </style>
 
 <div class="container-fluid">
@@ -39,25 +53,46 @@
 
         var zones = [
             { coords: [50.178, 30.315], radius: 3500, color: '#0088cc', name: 'м. Васильків (Оптика/Центр)' },
-            { coords: [50.141, 30.347], radius: 1800, color: '#00c853', name: 'с. Барахти' },
-            { coords: [50.198, 30.297], radius: 1500, color: '#00c853', name: 'с. Путрівка' },
-            { coords: [50.218, 30.320], radius: 1400, color: '#00c853', name: 'с. Зелений Бір' },
-            { coords: [50.165, 30.280], radius: 1200, color: '#ffeb3b', name: 'с. Березанщина' },
-            { coords: [50.230, 30.350], radius: 2000, color: '#00c853', name: 'с. Крушинка' },
-            { coords: [50.185, 30.270], radius: 1600, color: '#00c853', name: 'с. Здорівка' },
-            { coords: [50.170, 30.290], radius: 1000, color: '#ffeb3b', name: 'с. Безп\'ятне' },
-            { coords: [50.150, 30.260], radius: 1100, color: '#00c853', name: 'с. Борисів' },
-            { coords: [50.210, 30.250], radius: 1300, color: '#ffeb3b', name: 'с. Залізне' },
-            { coords: [50.190, 30.330], radius: 1200, color: '#00c853', name: 'с. Заріччя' },
-            { coords: [50.180, 30.250], radius: 1400, color: '#ffeb3b', name: 'с. Застугна' },
-            { coords: [50.200, 30.370], radius: 1100, color: '#00c853', name: 'с. Кобці' }
+            { coords: [50.113, 30.365], radius: 1800, color: '#00c853', name: 'с. Барахти' },
+            { coords: [50.207, 30.276], radius: 1500, color: '#00c853', name: 'с. Путрівка' },
+            { coords: [50.245, 30.369], radius: 1400, color: '#00c853', name: 'с. Зелений Бір' },
+            { coords: [50.205, 30.300], radius: 1200, color: '#ffeb3b', name: 'с. Березанщина' },
+            { coords: [50.232, 30.370], radius: 2000, color: '#00c853', name: 'с. Крушинка' },
+            { coords: [50.193, 30.254], radius: 1600, color: '#00c853', name: 'с. Здорівка' },
+            { coords: [50.161, 30.260], radius: 1000, color: '#ffeb3b', name: 'с. Безп\'ятне' },
+            { coords: [50.210, 30.342], radius: 1100, color: '#00c853', name: 'с. Борисів' },
+            { coords: [50.201, 30.354], radius: 1300, color: '#ffeb3b', name: 'с. Залізне' },
+            { coords: [50.148, 30.423], radius: 1200, color: '#00c853', name: 'с. Заріччя' },
+            { coords: [50.173, 30.272], radius: 1400, color: '#ffeb3b', name: 'с. Застугна' },
+            { coords: [50.216, 30.303], radius: 1100, color: '#00c853', name: 'с. Кобці' },
+            { coords: [50.168, 30.440], radius: 1600, color: '#00c853', name: 'с. Велика Бугаївка' }
         ];
 
+        var zoneLayers = [];
         zones.forEach(function(zone) {
-            L.circle(zone.coords, {
+            var circle = L.circle(zone.coords, {
                 color: zone.color, fillColor: zone.color, fillOpacity: 0.15, weight: 2, radius: zone.radius
             }).addTo(map).bindPopup("<strong style='color:" + zone.color + ";'>" + zone.name + "</strong>");
+            zoneLayers.push(circle);
         });
+
+        // Підганяємо карту так, щоб усі зони покриття було видно одразу
+        var allBounds = L.featureGroup(zoneLayers).getBounds();
+        map.fitBounds(allBounds, { padding: [30, 30] });
+
+        // Легенда + лічильник покритих населених пунктів (щоб одразу бачити, що нічого не пропущено)
+        var legend = L.control({ position: 'topright' });
+        legend.onAdd = function() {
+            var div = L.DomUtil.create('div', 'map-legend');
+            div.innerHTML =
+                '<h6>Покриття мережі</h6>' +
+                '<div class="map-legend-row"><span class="map-legend-dot" style="background:#0088cc;"></span>Центр / магістраль</div>' +
+                '<div class="map-legend-row"><span class="map-legend-dot" style="background:#00c853;"></span>Повне покриття</div>' +
+                '<div class="map-legend-row"><span class="map-legend-dot" style="background:#ffeb3b;"></span>Часткове покриття</div>' +
+                '<div class="map-legend-count">Позначено зон: ' + zones.length + '</div>';
+            return div;
+        };
+        legend.addTo(map);
 
         var serverIcon = L.icon({
             iconUrl: 'https://cdn-icons-png.flaticon.com/512/3208/3208726.png',
@@ -66,8 +101,8 @@
 
         var nodes = [
             { coords: [50.178, 30.315], title: 'Головна Серверна', desc: 'Васильків, Центр.' },
-            { coords: [50.198, 30.297], title: 'Вузол розподілу №2', desc: 'Путрівка.' },
-            { coords: [50.230, 30.350], title: 'Вузол розподілу №3', desc: 'Крушинка.' }
+            { coords: [50.207, 30.276], title: 'Вузол розподілу №2', desc: 'Путрівка.' },
+            { coords: [50.232, 30.370], title: 'Вузол розподілу №3', desc: 'Крушинка.' }
         ];
 
         nodes.forEach(function(node) {

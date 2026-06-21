@@ -9,7 +9,7 @@ from decimal import Decimal
 
 from .models import (
     Client, Account, Tariff, Payment, PromisedPayment,
-    ClientCredentials
+    ClientCredentials, generate_password
 )
 
 

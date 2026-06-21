@@ -100,6 +100,37 @@
         .custom-select-option.selected { background-color: var(--tw-nav-active); color: var(--tw-accent); font-weight: 700; }
         .custom-select-option.disabled { color: var(--tw-form-ph); cursor: default; font-style: italic; }
         .custom-select-option.disabled:hover { background: none; color: var(--tw-form-ph); }
+
+        /* ====== Уніфікований заголовок сторінки (стиль дашборду), доступний на всіх сторінках ====== */
+        .dash-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+        .dash-header h2 { display: flex; align-items: center; gap: 10px; color: var(--tw-text); font-size: 1.5rem; font-weight: 700; margin: 0; }
+        .dash-header h2 i { color: var(--tw-accent); }
+
+        /* ====== Плавна поява вмісту сторінки при кожному переході ====== */
+        @keyframes pageFadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .page-content { animation: pageFadeIn 0.4s ease; }
+
+        /* ====== Загальні плавні переходи по сайту (hover/active) ====== */
+        .sidebar .nav-link { transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease; }
+        .sidebar .nav-link:hover { transform: translateX(3px); }
+        .nav-right a, .nav-right button { transition: background 0.15s ease, transform 0.15s ease; }
+        .theme-toggle-btn { transition: background 0.15s ease, transform 0.15s ease; }
+        .theme-toggle-btn:hover { transform: scale(1.08) rotate(-8deg); }
+        .btn { transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease; }
+        .btn:hover { transform: translateY(-1px); }
+        .btn:active { transform: translateY(0) scale(0.97); }
+        .card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .card:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgba(0,0,0,0.14); }
+        .table-hover > tbody > tr { transition: background-color 0.15s ease; }
+        .badge { transition: transform 0.15s ease; }
+
+        @media (prefers-reduced-motion: reduce) {
+            .page-content { animation: none; }
+            .card, .btn, .sidebar .nav-link, .theme-toggle-btn { transition: none; }
+        }
     </style>
 </head>
 <body>
@@ -125,6 +156,7 @@
             </li>
             <li class="nav-item"><a class="nav-link" href="{% url 'warehouse' %}"><i class="bi bi-box-seam"></i> Склад</a></li>
             <li class="nav-item"><a class="nav-link" href="{% url 'billing_dashboard' %}"><i class="bi bi-credit-card-2-front-fill"></i> Білінг</a></li>
+            <li class="nav-item"><a class="nav-link" href="/admin/" target="_blank" rel="noopener"><i class="bi bi-shield-lock-fill"></i> Адмін-панель</a></li>
         </ul>
     </div>
 
@@ -218,7 +250,6 @@
                                     </button>
                                     <div class="custom-select-dropdown" id="status_dropdown">
                                         <div class="custom-select-option selected" data-value="new">Нова (Очікує обробки)</div>
-                                        <div class="custom-select-option" data-value="agreed">Погоджено (Відразу в роботу)</div>
                                         <div class="custom-select-option" data-value="refusal">Відмова / В архів</div>
                                     </div>
                                 </div>

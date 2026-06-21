@@ -14,6 +14,10 @@ class Equipment(models.Model):
     latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
 
+    class Meta:
+        verbose_name = "Обладнання"
+        verbose_name_plural = "Обладнання"
+
     def __str__(self):
         return f"{self.name} ({self.ip_address})"
 
@@ -29,16 +33,12 @@ class Client(models.Model):
     tariff = models.ForeignKey('Tariff', on_delete=models.SET_NULL, null=True, blank=True)
     is_blocked = models.BooleanField(default=False)
 
+    class Meta:
+        verbose_name = "Абонент"
+        verbose_name_plural = "Абоненти"
+
     def __str__(self):
         return f"{self.full_name} - {self.contract_number}"
-
-
-class Ticket(models.Model):
-    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='tickets')
-    description = models.TextField()
-    status = models.CharField(max_length=20, default='new')
-    priority = models.CharField(max_length=20, default='medium')
-    created_at = models.DateTimeField(auto_now_add=True)
 
 
 class WarehouseItem(models.Model):
@@ -48,12 +48,27 @@ class WarehouseItem(models.Model):
     unit = models.CharField(max_length=10, default='шт.')
     last_updated = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        verbose_name = "Складська позиція"
+        verbose_name_plural = "Складські позиції"
+
+    def __str__(self):
+        return f"{self.name} ({self.quantity} {self.unit})"
+
 
 class MessageLog(models.Model):
     target_client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
     subject = models.CharField(max_length=200)
     text = models.TextField()
     sent_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Повідомлення"
+        verbose_name_plural = "Повідомлення"
+
+    def __str__(self):
+        to = self.target_client.full_name if self.target_client else "Усім абонентам"
+        return f"{self.subject} → {to}"
 
 
 class Tariff(models.Model):
@@ -67,13 +82,34 @@ class Tariff(models.Model):
     support_24_7 = models.BooleanField(default=True)
     connection_fee = models.IntegerField(default=0)
 
+    class Meta:
+        verbose_name = "Тариф"
+        verbose_name_plural = "Тарифи"
+
+    def __str__(self):
+        return f"{self.name} — {self.price} грн/міс"
+
 
 class Employee(models.Model):
+    POSITION_CHOICES = [
+        ('admin', 'Системний адміністратор'),
+        ('installer', 'Монтажник'),
+        ('operator', 'Оператор Колл-центру'),
+        ('foreman', 'Бригадир'),
+        ('director', 'Директор'),
+    ]
     full_name = models.CharField(max_length=150)
-    position = models.CharField(max_length=50)
+    position = models.CharField(max_length=50, choices=POSITION_CHOICES, verbose_name="Посада")
     phone = models.CharField(max_length=20)
     email = models.EmailField(blank=True, null=True)
     is_active = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = "Співробітник"
+        verbose_name_plural = "Співробітники"
+
+    def __str__(self):
+        return self.full_name
 
 
 class ConnectionApplication(models.Model):
@@ -90,6 +126,13 @@ class ConnectionApplication(models.Model):
     planned_date = models.DateField(null=True, blank=True, verbose_name="Запланована дата")
     assignee = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Виконавець")
 
+    class Meta:
+        verbose_name = "Заявка на підключення"
+        verbose_name_plural = "Заявки на підключення"
+
+    def __str__(self):
+        return f"Заявка: {self.full_name} — {self.city}"
+
 
 class EmergencyTask(models.Model):
     city = models.CharField(max_length=50, default="м. Васильків", verbose_name="Місто")
@@ -101,6 +144,13 @@ class EmergencyTask(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     latitude = models.CharField(max_length=50, blank=True, null=True)
     longitude = models.CharField(max_length=50, blank=True, null=True)
+
+    class Meta:
+        verbose_name = "Аварія"
+        verbose_name_plural = "Аварії"
+
+    def __str__(self):
+        return f"Аварія: {self.address}"
 
 
 class Product(models.Model):
@@ -114,6 +164,10 @@ class Product(models.Model):
     image = models.ImageField(upload_to='products/', blank=True, null=True, verbose_name="Зображення")
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        verbose_name = "Товар"
+        verbose_name_plural = "Товари"
+
     def __str__(self):
         return self.name
 
@@ -123,6 +177,13 @@ class Sale(models.Model):
     quantity = models.IntegerField(default=1)
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
     sold_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Продаж"
+        verbose_name_plural = "Продажі"
+
+    def __str__(self):
+        return f"{self.product.name} x{self.quantity}"
 
 
 # ================= ФУНКЦІЇ ТА БІЛІНГОВІ МОДЕЛІ =================
@@ -147,6 +208,10 @@ class Account(models.Model):
     balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        verbose_name = "Рахунок абонента"
+        verbose_name_plural = "Рахунки абонентів"
+
     def __str__(self):
         return f"{self.client.full_name} — {self.balance} ₴"
 
@@ -163,6 +228,10 @@ class ClientCredentials(models.Model):
             self.password = generate_password()
         super().save(*args, **kwargs)
 
+    class Meta:
+        verbose_name = "Обліковий запис абонента"
+        verbose_name_plural = "Облікові записи абонентів"
+
     def __str__(self):
         return f"{self.client.full_name}: {self.login}"
 
@@ -173,6 +242,10 @@ class PromisedPayment(models.Model):
     is_active = models.BooleanField(default=True)
     comment = models.CharField(max_length=255, blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Обіцяний платіж"
+        verbose_name_plural = "Обіцяні платежі"
 
     def __str__(self):
         return f"{self.client.full_name} до {self.expires_at.strftime('%d.%m.%Y')}"
@@ -188,6 +261,8 @@ class Payment(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+        verbose_name = "Платіж"
+        verbose_name_plural = "Платежі"
 
     def __str__(self):
         return f"{self.client.full_name}: {self.amount} ₴ ({self.payment_type})"

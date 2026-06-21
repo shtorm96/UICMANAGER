@@ -1,11 +1,33 @@
 from django.contrib import admin
 from .models import (
-    Equipment, Client, Ticket, WarehouseItem, Tariff, Employee,
-    ConnectionApplication, Product, Sale, ClientCredentials, EmergencyTask, MessageLog
+    Equipment, Client, WarehouseItem, Tariff, Employee,
+    ConnectionApplication, Product, Sale, ClientCredentials, EmergencyTask, MessageLog,
+    Account, PromisedPayment, Payment
 )
 
 admin.site.register(ClientCredentials)
 admin.site.register(MessageLog)
+
+
+@admin.register(Account)
+class AccountAdmin(admin.ModelAdmin):
+    list_display = ('client', 'balance', 'updated_at')
+    search_fields = ('client__full_name', 'client__contract_number')
+    list_filter = ('updated_at',)
+
+
+@admin.register(PromisedPayment)
+class PromisedPaymentAdmin(admin.ModelAdmin):
+    list_display = ('client', 'expires_at', 'is_active', 'created_at')
+    list_filter = ('is_active', 'expires_at')
+    search_fields = ('client__full_name', 'client__contract_number')
+
+
+@admin.register(Payment)
+class PaymentAdmin(admin.ModelAdmin):
+    list_display = ('client', 'amount', 'payment_type', 'created_by', 'created_at')
+    list_filter = ('payment_type', 'created_at')
+    search_fields = ('client__full_name', 'client__contract_number', 'comment')
 
 @admin.register(Equipment)
 class EquipmentAdmin(admin.ModelAdmin):
@@ -19,13 +41,6 @@ class ClientAdmin(admin.ModelAdmin):
     search_fields = ('full_name', 'onu_serial', 'contract_number')
     list_filter = ('is_online', 'equipment')
     list_editable = ('is_online',)
-
-@admin.register(Ticket)
-class TicketAdmin(admin.ModelAdmin):
-    list_display = ('id', 'client', 'status', 'priority', 'created_at')
-    list_filter = ('status', 'priority', 'created_at')
-    search_fields = ('client__full_name', 'description')
-    list_editable = ('status', 'priority')
 
 @admin.register(WarehouseItem)
 class WarehouseItemAdmin(admin.ModelAdmin):
