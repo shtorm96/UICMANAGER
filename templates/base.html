@@ -343,7 +343,7 @@
             function updateClock() {
                 const now = new Date();
                 document.getElementById('clock-time').textContent = now.toLocaleTimeString('uk-UA', { hour12: false });
-                document.getElementById('clock-date').textContent = now.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' }) + ' р.';
+                document.getElementById('clock-date').textContent = now.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' });
             }
             setInterval(updateClock, 1000); updateClock();
         });
@@ -419,7 +419,9 @@
         });
     </script>
 
-    <script> = document.querySelectorAll('input[name="object_type"]');
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const typeRadios = document.querySelectorAll('input[name="object_type"]');
             const flatFields = document.getElementById('flatFields');
 
             typeRadios.forEach(radio => {
