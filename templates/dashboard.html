@@ -278,4 +278,20 @@
         </div>
     </div>
 </div>
+
+<script>
+    // Автовідкриття вікна фіксації аварії, якщо перехід сюди зроблено з кнопки "Аварія / Обрив" у сайдбарі (?emergency=1)
+    document.addEventListener('DOMContentLoaded', function() {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('emergency') === '1') {
+            const modalEl = document.getElementById('newEmergencyModal');
+            if (modalEl) {
+                new bootstrap.Modal(modalEl).show();
+            }
+            // Чистимо URL, щоб при оновленні сторінки модалка не відкривалася знову
+            const cleanUrl = window.location.pathname;
+            window.history.replaceState({}, '', cleanUrl);
+        }
+    });
+</script>
 {% endblock %}

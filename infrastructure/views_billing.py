@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 from django.db.models import Sum, Q
-from datetime import timedelta
+from datetime import timedelta, datetime, time
 from decimal import Decimal
 
 from .models import (
@@ -186,15 +186,27 @@ def promised_payment(request, client_id):
 
     if promised_type == 'custom':
         date_str = request.POST.get('expires_date')
-        # Тут можна додати парсинг дати, але для простоти залишимо 7 днів як базу
-        expires_at = timezone.now() + timedelta(days=7)
+        custom_date = None
+        if date_str:
+            try:
+                custom_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            except ValueError:
+                custom_date = None
+
+        if custom_date and custom_date > timezone.localdate():
+            expires_at = timezone.make_aware(datetime.combine(custom_date, time(23, 59)))
+        else:
+            messages.warning(request, '⚠️ Дата некоректна або вже минула — встановлено стандартні 7 днів.')
+            expires_at = timezone.now() + timedelta(days=7)
     else:
         expires_at = timezone.now() + timedelta(days=7)
+
+    comment = request.POST.get('comment', '').strip()
 
     PromisedPayment.objects.create(
         client=client,
         expires_at=expires_at,
-        comment=request.POST.get('comment', 'Обіцяний платіж на 7 днів'),
+        comment=comment or f'Обіцяний платіж до {expires_at.strftime("%d.%m.%Y")}',
     )
 
     client.is_blocked = False

@@ -1,6 +1,46 @@
 {% extends 'base.html' %}
 {% block title %}Повідомлення | UIC-Manager{% endblock %}
 
+{% block modals %}
+{% for msg in history %}
+<div class="modal fade" id="msgModal{{ msg.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow" style="background-color: var(--tw-sidebar-bg); color: var(--tw-text);">
+            <div class="modal-header" style="border-bottom: 1px solid var(--tw-sidebar-border);">
+                <h5 class="modal-title fw-bold" style="color: var(--tw-accent);">
+                    <i class="bi bi-envelope-open"></i> Деталі повідомлення
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="filter: invert(1) grayscale(100%) brightness(200%);"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-1 small text-uppercase" style="color: var(--tw-muted);">Одержувач:</p>
+                <h6 class="fw-bold mb-3">
+                    {% if msg.target_client %}{{ msg.target_client.full_name }}{% else %}Усім абонентам{% endif %}
+                </h6>
+                <p class="mb-1 small text-uppercase" style="color: var(--tw-muted);">Дата відправки:</p>
+                <p class="mb-3">{{ msg.sent_at|date:"d.m.Y H:i:s" }}</p>
+                <p class="mb-1 small text-uppercase" style="color: var(--tw-muted);">Тема:</p>
+                <p class="fw-bold mb-3" style="color: var(--tw-accent);">{{ msg.subject }}</p>
+                <p class="mb-1 small text-uppercase" style="color: var(--tw-muted);">Текст повідомлення:</p>
+                <div class="p-3 rounded" style="white-space: pre-wrap; background-color: var(--tw-nav-hover); border: 1px solid var(--tw-sidebar-border);">{{ msg.text }}</div>
+            </div>
+            <div class="modal-footer d-flex justify-content-between" style="border-top: 1px solid var(--tw-sidebar-border);">
+                <form method="POST" action="{% url 'messages' %}" style="margin: 0;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete">
+                    <input type="hidden" name="message_id" value="{{ msg.id }}">
+                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                        <i class="bi bi-trash"></i> Видалити запис
+                    </button>
+                </form>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Закрити</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
     <div class="dash-header">
@@ -33,13 +73,13 @@
                         <div class="mb-3">
                             <label class="form-label small fw-bold text-uppercase" style="color: var(--tw-muted);">Тема повідомлення</label>
                             <input type="text" name="subject" class="form-control" placeholder="Наприклад: Технічні роботи" required
-                                   style="background-color: var(--tw-input-bg); color: var(--tw-input-text); border: 1px solid var(--tw-input-border);">
+                                   style="background-color: var(--tw-form-bg); color: var(--tw-form-text); border: 1px solid var(--tw-form-border);">
                         </div>
 
                         <div class="mb-4">
                             <label class="form-label small fw-bold text-uppercase" style="color: var(--tw-muted);">Текст (SMS / Email)</label>
                             <textarea name="text" class="form-control" rows="5" placeholder="Введіть текст повідомлення..." required
-                                      style="background-color: var(--tw-input-bg); color: var(--tw-input-text); border: 1px solid var(--tw-input-border);"></textarea>
+                                      style="background-color: var(--tw-form-bg); color: var(--tw-form-text); border: 1px solid var(--tw-form-border);"></textarea>
                         </div>
 
                         <button type="submit" class="btn w-100 fw-bold" style="background-color: var(--tw-accent); color: white;">
@@ -90,45 +130,6 @@
                                         </span>
                                     </td>
                                 </tr>
-
-                                <div class="modal fade" id="msgModal{{ msg.id }}" tabindex="-1" aria-hidden="true">
-                                    <div class="modal-dialog modal-dialog-centered">
-                                        <div class="modal-content border-0 shadow" style="background-color: var(--tw-sidebar-bg); color: var(--tw-text);">
-                                            <div class="modal-header" style="border-bottom: 1px solid var(--tw-sidebar-border);">
-                                                <h5 class="modal-title fw-bold" style="color: var(--tw-accent);">
-                                                    <i class="bi bi-envelope-open"></i> Деталі повідомлення
-                                                </h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="filter: invert(1) grayscale(100%) brightness(200%);"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <p class="mb-1 small text-uppercase" style="color: var(--tw-muted);">Одержувач:</p>
-                                                <h6 class="fw-bold mb-3">
-                                                    {% if msg.target_client %}{{ msg.target_client.full_name }}{% else %}Усім абонентам{% endif %}
-                                                </h6>
-
-                                                <p class="mb-1 small text-uppercase" style="color: var(--tw-muted);">Дата відправки:</p>
-                                                <p class="mb-3">{{ msg.sent_at|date:"d.m.Y H:i:s" }}</p>
-
-                                                <p class="mb-1 small text-uppercase" style="color: var(--tw-muted);">Тема:</p>
-                                                <p class="fw-bold mb-3" style="color: var(--tw-accent);">{{ msg.subject }}</p>
-
-                                                <p class="mb-1 small text-uppercase" style="color: var(--tw-muted);">Текст повідомлення:</p>
-                                                <div class="p-3 rounded" style="white-space: pre-wrap; background-color: var(--tw-nav-hover); border: 1px solid var(--tw-sidebar-border);">{{ msg.text }}</div>
-                                            </div>
-                                            <div class="modal-footer d-flex justify-content-between" style="border-top: 1px solid var(--tw-sidebar-border);">
-                                                <form method="POST" action="{% url 'messages' %}" style="margin: 0;">
-                                                    {% csrf_token %}
-                                                    <input type="hidden" name="action" value="delete">
-                                                    <input type="hidden" name="message_id" value="{{ msg.id }}">
-                                                    <button type="submit" class="btn btn-outline-danger btn-sm">
-                                                        <i class="bi bi-trash"></i> Видалити запис
-                                                    </button>
-                                                </form>
-                                                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Закрити</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
                                 {% empty %}
                                 <tr>
                                     <td colspan="4" class="text-center py-5" style="color: var(--tw-muted);">
@@ -145,6 +146,16 @@
         </div>
     </div>
 </div>
+
+{% if messages %}
+<div style="position:fixed; bottom:24px; right:24px; z-index:9999; display:flex; flex-direction:column; gap:8px;">
+  {% for m in messages %}
+  <div class="alert alert-{% if m.tags == 'error' %}danger{% elif m.tags == 'warning' %}warning{% else %}success{% endif %} shadow mb-0" style="min-width:280px; border-radius:10px;">
+    {{ m }}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
 
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 

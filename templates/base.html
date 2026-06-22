@@ -106,12 +106,12 @@
         .dash-header h2 { display: flex; align-items: center; gap: 10px; color: var(--tw-text); font-size: 1.5rem; font-weight: 700; margin: 0; }
         .dash-header h2 i { color: var(--tw-accent); }
 
-        /* ====== Плавна поява вмісту сторінки при кожному переході ====== */
+        /* ====== Плавна поява вмісту сторінки при кожному переході (лише opacity — transform на .page-content ламає position:fixed у вкладених Bootstrap-модалках) ====== */
         @keyframes pageFadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
-        .page-content { animation: pageFadeIn 0.4s ease; }
+        .page-content { animation: pageFadeIn 0.35s ease; }
 
         /* ====== Загальні плавні переходи по сайту (hover/active) ====== */
         .sidebar .nav-link { transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease; }
@@ -122,8 +122,8 @@
         .btn { transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease; }
         .btn:hover { transform: translateY(-1px); }
         .btn:active { transform: translateY(0) scale(0.97); }
-        .card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
-        .card:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgba(0,0,0,0.14); }
+        .card { transition: box-shadow 0.2s ease; }
+        .card:hover { box-shadow: 0 10px 26px rgba(0,0,0,0.14); }
         .table-hover > tbody > tr { transition: background-color 0.15s ease; }
         .badge { transition: transform 0.15s ease; }
 
@@ -150,7 +150,7 @@
             <li class="nav-item"><a class="nav-link" href="{% url 'personnel' %}"><i class="bi bi-person-badge-fill"></i> Персонал</a></li>
             <li class="nav-item"><a class="nav-link" href="{% url 'tasks' %}"><i class="bi bi-list-task"></i> Журнал завдань</a></li>
             <li class="nav-item mt-2 px-2">
-                <a href="{% url 'create_emergency' %}" class="btn btn-danger btn-sm w-100 text-start">
+                <a href="{% url 'dashboard' %}?emergency=1" class="btn btn-danger btn-sm w-100 text-start">
                     <i class="bi bi-exclamation-triangle-fill"></i> Аварія / Обрив
                 </a>
             </li>
@@ -197,6 +197,9 @@
             {% block content %}{% endblock %}
         </div>
     </div>
+
+    {# ======= Блок для модалок дочірніх шаблонів (поза .main-content, щоб position:fixed рахувався відносно viewport) ======= #}
+    {% block modals %}{% endblock %}
 
     <div class="modal fade" id="newApplicationModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">

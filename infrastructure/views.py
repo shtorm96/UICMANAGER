@@ -34,14 +34,17 @@ def dashboard_view(request):
 @login_required
 def create_emergency_view(request):
     if request.method == 'POST':
-        city = request.POST.get('city', 'м. Васильків')
-        street = request.POST.get('street', '')
-        full_address = f"{city}, {street}"
+        # Форма на дашборді надсилає одне поле "address" (повна адреса одним рядком) —
+        # раніше тут шукалися 'city'/'street', яких у формі немає, тому реальна адреса втрачалася.
+        address_input = request.POST.get('address', '').strip()
+        parts = [p.strip() for p in address_input.split(',')] if address_input else []
+        city = parts[0] if parts else 'м. Васильків'
+        street = parts[1] if len(parts) > 1 else ''
 
         task = EmergencyTask.objects.create(
             city=city,
             street=street,
-            address=full_address,
+            address=address_input or f"{city}, {street}",
             description=request.POST.get('description', ''),
             status='new',
             latitude=request.POST.get('latitude'),
