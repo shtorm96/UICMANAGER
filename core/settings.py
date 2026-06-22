@@ -117,6 +117,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'static'
 LOGIN_URL = 'login' # Куди відправляти для входу
 LOGIN_REDIRECT_URL = 'dashboard' # Куди перенаправляти після успішного входу
 
